@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0f0f1a;
@@ -57,11 +57,20 @@
   }
 
   .logo {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: 22px;
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: baseline;
+    gap: 1px;
+  }
+  .logo-yh {
+    font-weight: 700;
+    color: var(--text);
+  }
+  .logo-note {
+    font-weight: 400;
     color: var(--accent);
-    letter-spacing: 0.02em;
   }
 
   .header-actions {
@@ -622,7 +631,7 @@
 <!-- HEADER -->
 <div class="header">
   <div class="header-inner">
-    <div class="logo">yh note</div>
+    <div class="logo"><span class="logo-yh">yh</span><span class="logo-note">note</span></div>
     <div class="header-actions">
       <button class="icon-btn" id="searchToggle" title="検索">🔍</button>
     </div>
