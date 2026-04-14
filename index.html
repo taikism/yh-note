@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="YH Note">
+<meta name="theme-color" content="#1a1a2e">
+<title>YH Note</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface2: #252540;
+    --accent: #e8a87c;
+    --accent2: #c084fc;
+    --text: #f0f0f8;
+    --text-muted: #8888aa;
+    --border: rgba(255,255,255,0.08);
+    --radius: 16px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ==================== HEADER ==================== */
+  .header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: calc(var(--safe-top) + 12px) 16px 12px;
+    background: linear-gradient(180deg, rgba(15,15,26,0.98) 0%, rgba(15,15,26,0.0) 100%);
+    backdrop-filter: blur(8px);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .icon-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .icon-btn:active { background: var(--surface); }
+
+  /* ==================== SEARCH BAR ==================== */
+  .search-bar {
+    max-width: 600px;
+    margin: 0 auto 12px;
+    padding: 0 16px;
+    display: none;
+  }
+  .search-bar.visible { display: block; }
+  .search-bar input {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+  }
+
+  /* ==================== CATEGORY TABS ==================== */
+  .category-tabs {
+    position: sticky;
+    top: calc(var(--safe-top) + 56px);
+    z-index: 90;
+    padding: 8px 0;
+    background: linear-gradient(180deg, var(--bg) 80%, transparent);
+  }
+
+  .category-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0 16px;
+    scrollbar-width: none;
+  }
+  .category-scroll::-webkit-scrollbar { display: none; }
+
+  .cat-tab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .cat-tab.active {
+    background: var(--accent);
+    color: #1a1a2e;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ==================== TIMELINE ==================== */
+  .timeline {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 8px 12px calc(var(--safe-bottom) + 90px);
+  }
+
+  /* 年月ヘッダー */
+  .month-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 4px 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .month-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* 投稿カード */
+  .post-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .post-card:nth-child(1) { animation-delay: 0.05s; }
+  .post-card:nth-child(2) { animation-delay: 0.10s; }
+  .post-card:nth-child(3) { animation-delay: 0.15s; }
+
+  .post-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .post-cats {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .cat-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .post-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* メディアグリッド */
+  .media-grid { position: relative; background: #000; }
+
+  .media-grid.single img,
+  .media-grid.single video {
+    width: 100%;
+    max-height: 480px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .media-grid.multi {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+  .media-grid.multi img,
+  .media-grid.multi video {
+    width: 100%; height: 180px;
+    object-fit: cover;
+    display: block;
+  }
+  .media-grid.multi.three img:first-child {
+    grid-column: 1 / -1;
+    height: 220px;
+  }
+
+  .media-count-overlay {
+    position: absolute;
+    bottom: 8px; right: 8px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+  }
+
+  .video-badge {
+    position: absolute;
+    top: 8px; left: 8px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 18px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .post-body {
+    padding: 10px 14px 12px;
+  }
+
+  .post-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  .post-comment {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .tag {
+    font-size: 11px;
+    color: var(--accent2);
+  }
+
+  .post-actions {
+    display: flex;
+    padding: 0 8px 8px;
+    gap: 4px;
+  }
+
+  .action-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .action-btn:active { background: var(--surface2); }
+
+  /* ==================== LIGHTBOX ==================== */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.95);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox.open { display: flex; }
+
+  .lightbox img, .lightbox video {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: calc(var(--safe-top) + 12px);
+    right: 16px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ==================== FAB (投稿ボタン) ==================== */
+  .fab {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + 24px);
+    right: 20px;
+    z-index: 100;
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), #e07b4a);
+    color: #1a1a2e;
+    font-size: 26px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(232,168,124,0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .fab:active { transform: scale(0.93); box-shadow: 0 2px 10px rgba(232,168,124,0.3); }
+
+  /* ==================== 投稿モーダル ==================== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; align-items: flex-end; }
+
+  .modal {
+    width: 100%;
+    max-height: 95vh;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 16px 0 calc(var(--safe-bottom) + 16px);
+    overflow-y: auto;
+    animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    padding: 0 20px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+  }
+
+  .form-section { padding: 16px 20px 0; }
+
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .form-input, .form-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    margin-bottom: 16px;
+  }
+  .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { min-height: 80px; resize: none; line-height: 1.6; }
+
+  /* カテゴリー複数選択 */
+  .cat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .cat-checkbox {
+    display: none;
+  }
+
+  .cat-label {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .cat-checkbox:checked + .cat-label {
+    border-color: var(--accent);
+    background: rgba(232,168,124,0.15);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* メディア選択 */
+  .media-picker {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+  }
+  .media-picker::-webkit-scrollbar { display: none; }
+
+  .add-media-btn {
+    flex-shrink: 0;
+    width: 80px; height: 80px;
+    border-radius: 12px;
+    border: 2px dashed var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 28px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .add-media-btn span { font-size: 10px; }
+
+  .media-thumb {
+    flex-shrink: 0;
+    position: relative;
+    width: 80px; height: 80px;
+  }
+  .media-thumb img, .media-thumb video {
+    width: 80px; height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+  }
+  .media-remove {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #ff4444;
+    color: #fff;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+
+  /* 日付入力 */
+  .date-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .date-row .form-input { margin-bottom: 0; flex: 1; }
+  .date-auto-btn {
+    flex-shrink: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    white-space: nowrap;
+  }
+
+  /* 送信ボタン */
+  .submit-btn {
+    width: calc(100% - 40px);
+    margin: 8px 20px 0;
+    padding: 15px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), #e07b4a);
+    color: #1a1a2e;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .submit-btn:disabled { opacity: 0.5; }
+  .submit-btn:active { opacity: 0.8; }
+
+  /* ==================== LOADING / EMPTY ==================== */
+  .loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 12px;
+    color: var(--text-muted);
+  }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.8; }
+
+  /* ==================== TOAST ==================== */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + 100px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 色マッピング */
+  .c-01 { background: rgba(255,180,150,0.2); color: #ffb496; }
+  .c-02 { background: rgba(150,200,255,0.2); color: #96c8ff; }
+  .c-03 { background: rgba(180,255,180,0.2); color: #b4ffb4; }
+  .c-06 { background: rgba(255,220,150,0.2); color: #ffdc96; }
+  .c-07 { background: rgba(200,150,255,0.2); color: #c896ff; }
+  .c-08 { background: rgba(255,150,200,0.2); color: #ff96c8; }
+  .c-09 { background: rgba(150,255,220,0.2); color: #96ffdc; }
+  .c-10 { background: rgba(255,200,100,0.2); color: #ffc864; }
+  .c-11 { background: rgba(100,200,255,0.2); color: #64c8ff; }
+  .c-12 { background: rgba(255,150,100,0.2); color: #ff9664; }
+  .c-21 { background: rgba(255,255,150,0.2); color: #ffff96; }
+  .c-99 { background: rgba(200,200,200,0.2); color: #c8c8c8; }
+  .c-00 { background: rgba(150,150,150,0.2); color: #969696; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">yh note</div>
+    <div class="header-actions">
+      <button class="icon-btn" id="searchToggle" title="検索">🔍</button>
+    </div>
+  </div>
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="タイトル・コメント・タグを検索…" autocomplete="off">
+  </div>
+</div>
+
+<!-- CATEGORY TABS -->
+<div class="category-tabs" style="padding-top: calc(env(safe-area-inset-top, 0px) + 60px);">
+  <div class="category-scroll" id="categoryTabs"></div>
+</div>
+
+<!-- TIMELINE -->
+<div class="timeline" id="timeline">
+  <div class="loader"><div class="spinner"></div><span>読み込み中…</span></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn">＋</button>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">✕</button>
+  <div id="lightboxContent"></div>
+</div>
+
+<!-- 投稿モーダル -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新しい投稿</div>
+
+    <div class="form-section">
+      <label class="form-label">📁 カテゴリー（複数選択可）</label>
+      <div class="cat-grid" id="formCatGrid"></div>
+
+      <label class="form-label">📷 写真・動画</label>
+      <div class="media-picker" id="mediaPicker">
+        <div class="add-media-btn" id="addMediaBtn">
+          <span>＋</span>
+          <span>追加</span>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none">
+
+      <label class="form-label">📅 撮影日時</label>
+      <div class="date-row">
+        <input class="form-input" type="datetime-local" id="shootingDate">
+        <button class="date-auto-btn" id="dateAutoBtn">Exifから取得</button>
+      </div>
+
+      <label class="form-label">✏️ タイトル</label>
+      <input class="form-input" type="text" id="postTitle" placeholder="タイトルを入力…">
+
+      <label class="form-label">💬 コメント</label>
+      <textarea class="form-textarea" id="postComment" placeholder="コメントを入力…" rows="3"></textarea>
+
+      <label class="form-label">🏷 タグ（スペース区切り）</label>
+      <input class="form-input" type="text" id="postTags" placeholder="例: 公園 お出かけ 夏">
+    </div>
+
+    <button class="submit-btn" id="submitBtn">投稿する</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================
+// 設定 — GASデプロイ後にURLを差し替え
+// ==========================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbybZRzyXBqeo7QG-EtLYMEarbaQsYZH34h22iwKSqCD6OBpwq7B0BwhclPf-XWcHoOxMA/exec';
+
+const CATEGORIES = [
+  { id: 'all',                  label: 'すべて',         color: '' },
+  { id: '01_koharu',            label: '🌸 心春',        color: 'c-01' },
+  { id: '02_rintaro',           label: '🦁 凛太郎',      color: 'c-02' },
+  { id: '03_kentaro',           label: '🌿 健太郎',      color: 'c-03' },
+  { id: '06_yorrys-kitchen',    label: '🍳 Yorry\'s K',  color: 'c-06' },
+  { id: '07_yh',                label: '👤 YH',          color: 'c-07' },
+  { id: '08_family',            label: '👨‍👩‍👧‍👦 家族',        color: 'c-08' },
+  { id: '09_people',            label: '🧑‍🤝‍🧑 人々',        color: 'c-09' },
+  { id: '10_koharinkens-kitchen', label: '🌸🦁 子供キッチン', color: 'c-10' },
+  { id: '11_taikism-kitchen',   label: '🌊 タイ料理',    color: 'c-11' },
+  { id: '12_other-kitchen',     label: '🍽 その他料理',  color: 'c-12' },
+  { id: '21_hope',              label: '✨ Hope',         color: 'c-21' },
+  { id: '99_remember',          label: '💭 Remember',    color: 'c-99' },
+  { id: '00_inbox',             label: '📥 Inbox',        color: 'c-00' },
+];
+
+// ==========================================
+// State
+// ==========================================
+let currentCategory = 'all';
+let currentSearch = '';
+let posts = [];
+let pendingFiles = []; // {file, previewUrl, base64, mimeType, exifDate}
+let editingPostId = null;
+
+// ==========================================
+// Init
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+  buildCategoryTabs();
+  buildFormCatGrid();
+  loadPosts();
+  bindEvents();
+});
+
+function buildCategoryTabs() {
+  const el = document.getElementById('categoryTabs');
+  el.innerHTML = CATEGORIES.map(c =>
+    `<button class="cat-tab${c.id === 'all' ? ' active' : ''}" data-id="${c.id}">${c.label}</button>`
+  ).join('');
+  el.querySelectorAll('.cat-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      el.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCategory = btn.dataset.id;
+      loadPosts();
+    });
+  });
+}
+
+function buildFormCatGrid() {
+  const grid = document.getElementById('formCatGrid');
+  grid.innerHTML = CATEGORIES.filter(c => c.id !== 'all').map(c =>
+    `<label>
+      <input type="checkbox" class="cat-checkbox" value="${c.id}">
+      <span class="cat-label">${c.label}</span>
+    </label>`
+  ).join('');
+}
+
+// ==========================================
+// API Calls
+// ==========================================
+async function apiGet(params) {
+  const url = new URL(GAS_URL);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function apiPost(body) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+// ==========================================
+// Load Posts
+// ==========================================
+async function loadPosts() {
+  document.getElementById('timeline').innerHTML = '<div class="loader"><div class="spinner"></div><span>読み込み中…</span></div>';
+  try {
+    const params = { action: 'getPosts', limit: 30 };
+    if (currentCategory !== 'all') params.category = currentCategory;
+    if (currentSearch) params.search = currentSearch;
+    const data = await apiGet(params);
+    if (data.success) {
+      posts = data.posts;
+      renderTimeline(posts);
+    } else {
+      showError('読み込みに失敗しました');
+    }
+  } catch (e) {
+    showError('接続エラー。GAS URLを確認してください。');
+    console.error(e);
+  }
+}
+
+// ==========================================
+// Render Timeline
+// ==========================================
+function renderTimeline(posts) {
+  const el = document.getElementById('timeline');
+  if (!posts.length) {
+    el.innerHTML = '<div class="empty-state"><div class="emoji">📷</div><p>まだ投稿がありません。<br>＋ボタンから最初の思い出を投稿しましょう！</p></div>';
+    return;
+  }
+
+  let html = '';
+  let lastMonth = '';
+
+  posts.forEach((post, i) => {
+    const date = new Date(post.shootingDate);
+    const month = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+    if (month !== lastMonth) {
+      html += `<div class="month-divider">${month}</div>`;
+      lastMonth = month;
+    }
+    html += renderCard(post, i);
+  });
+
+  el.innerHTML = html;
+  el.querySelectorAll('.media-thumb-view').forEach(el => {
+    el.addEventListener('click', () => openLightbox(el.dataset.url, el.dataset.type));
+  });
+  el.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+  });
+}
+
+function renderCard(post, i) {
+  const date = new Date(post.shootingDate);
+  const dateStr = `${date.getFullYear()}/${String(date.getMonth()+1).padStart(2,'0')}/${String(date.getDate()).padStart(2,'0')}`;
+
+  const cats = String(post.categories || '').split(',').map(c => c.trim()).filter(Boolean);
+  const catBadges = cats.map(c => {
+    const def = CATEGORIES.find(x => x.id === c);
+    return def ? `<span class="cat-badge ${def.color}">${def.label}</span>` : '';
+  }).join('');
+
+  const files = String(post.fileUrls || '').split('|').filter(Boolean);
+  const thumbUrl = post.thumbnailUrl || (files[0] ? fileToThumb(files[0]) : '');
+
+  let mediaHtml = '';
+  if (files.length === 1) {
+    const isVideo = isVideoUrl(files[0]);
+    mediaHtml = `<div class="media-grid single">
+      ${isVideo
+        ? `<video src="${toDirectUrl(files[0])}" class="media-thumb-view" data-url="${files[0]}" data-type="video" preload="metadata" playsinline></video><div class="video-badge">▶</div>`
+        : `<img src="${thumbUrl}" class="media-thumb-view" data-url="${files[0]}" data-type="image" loading="lazy">`
+      }
+    </div>`;
+  } else if (files.length > 1) {
+    const shown = files.slice(0, 4);
+    const cls = shown.length === 2 ? 'multi' : shown.length === 3 ? 'multi three' : 'multi';
+    const thumbsHtml = shown.map(f => {
+      const isVid = isVideoUrl(f);
+      return isVid
+        ? `<video src="${toDirectUrl(f)}" class="media-thumb-view" data-url="${f}" data-type="video" preload="metadata" playsinline></video>`
+        : `<img src="${fileToThumb(f)}" class="media-thumb-view" data-url="${f}" data-type="image" loading="lazy">`;
+    }).join('');
+    mediaHtml = `<div class="media-grid ${cls}" style="position:relative">
+      ${thumbsHtml}
+      ${files.length > 4 ? `<div class="media-count-overlay">+${files.length - 4}</div>` : ''}
+    </div>`;
+  }
+
+  const tags = String(post.tags || '').trim();
+  const tagsHtml = tags ? tags.split(/\s+/).map(t => `<span class="tag">#${t}</span>`).join('') : '';
+
+  return `<div class="post-card" style="animation-delay:${i * 0.05}s">
+    <div class="post-header">
+      <div class="post-cats">${catBadges || '<span style="color:var(--text-muted);font-size:11px">カテゴリなし</span>'}</div>
+      <span class="post-date">${dateStr}</span>
+    </div>
+    ${mediaHtml}
+    <div class="post-body">
+      ${post.title ? `<div class="post-title">${escHtml(post.title)}</div>` : ''}
+      ${post.comment ? `<div class="post-comment">${escHtml(post.comment)}</div>` : ''}
+      ${tagsHtml ? `<div class="post-tags">${tagsHtml}</div>` : ''}
+    </div>
+    <div class="post-actions">
+      <button class="action-btn edit-btn" data-id="${post.id}">✏️ 編集</button>
+    </div>
+  </div>`;
+}
+
+// ==========================================
+// File Upload & Exif
+// ==========================================
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function readExifDate(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const bytes = new Uint8Array(e.target.result);
+        // Exif: JPEGはFFD8FF E1 から始まる
+        // DateTimeOriginal (0x9003) を探す
+        const str = new TextDecoder('ascii', { fatal: false }).decode(bytes);
+        const match = str.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+        if (match) {
+          resolve(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`);
+        } else {
+          resolve(null);
+        }
+      } catch { resolve(null); }
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsArrayBuffer(file.slice(0, 65536));
+  });
+}
+
+async function addFiles(files) {
+  for (const file of files) {
+    const previewUrl = URL.createObjectURL(file);
+    const exifDate = file.type.startsWith('image/') ? await readExifDate(file) : null;
+    pendingFiles.push({ file, previewUrl, exifDate, mimeType: file.type });
+    addMediaThumb(pendingFiles.length - 1, previewUrl, file.type);
+  }
+  // 最初のファイルのExif日付を日付フィールドにセット
+  if (pendingFiles.length > 0 && !document.getElementById('shootingDate').value) {
+    const firstExif = pendingFiles.find(f => f.exifDate);
+    if (firstExif) {
+      document.getElementById('shootingDate').value = firstExif.exifDate;
+    }
+  }
+}
+
+function addMediaThumb(idx, url, mimeType) {
+  const picker = document.getElementById('mediaPicker');
+  const addBtn = document.getElementById('addMediaBtn');
+  const isVideo = mimeType.startsWith('video/');
+  const thumb = document.createElement('div');
+  thumb.className = 'media-thumb';
+  thumb.dataset.idx = idx;
+  thumb.innerHTML = isVideo
+    ? `<video src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:12px"></video>`
+    : `<img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:12px">`;
+  const rm = document.createElement('button');
+  rm.className = 'media-remove';
+  rm.innerHTML = '✕';
+  rm.onclick = () => {
+    pendingFiles[idx] = null;
+    thumb.remove();
+  };
+  thumb.appendChild(rm);
+  picker.insertBefore(thumb, addBtn);
+}
+
+// ==========================================
+// Submit Post
+// ==========================================
+async function submitPost() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'アップロード中…';
+
+  const checkedCats = [...document.querySelectorAll('#formCatGrid .cat-checkbox:checked')].map(c => c.value);
+  const title = document.getElementById('postTitle').value.trim();
+  const comment = document.getElementById('postComment').value.trim();
+  const tags = document.getElementById('postTags').value.trim();
+  const shootingDate = document.getElementById('shootingDate').value
+    ? new Date(document.getElementById('shootingDate').value).toISOString()
+    : new Date().toISOString();
+
+  if (!checkedCats.length && !title && !comment) {
+    showToast('カテゴリーかタイトルを入力してください');
+    btn.disabled = false;
+    btn.textContent = '投稿する';
+    return;
+  }
+
+  try {
+    const fileUrls = [];
+    let thumbnailUrl = '';
+    const validFiles = pendingFiles.filter(Boolean);
+
+    for (let i = 0; i < validFiles.length; i++) {
+      btn.textContent = `アップロード中… ${i+1}/${validFiles.length}`;
+      const pf = validFiles[i];
+      const base64 = await readFileAsBase64(pf.file);
+      const res = await apiPost({
+        action: 'uploadFile',
+        base64,
+        mimeType: pf.mimeType,
+        fileName: pf.file.name,
+        categories: checkedCats
+      });
+      if (res.success) {
+        fileUrls.push(res.fileUrl);
+        if (!thumbnailUrl) thumbnailUrl = res.thumbnailUrl;
+      }
+    }
+
+    btn.textContent = '保存中…';
+    const postData = {
+      categories: checkedCats,
+      title, comment, tags,
+      shootingDate, fileUrls, thumbnailUrl
+    };
+
+    let res;
+    if (editingPostId) {
+      res = await apiPost({ action: 'updatePost', id: editingPostId, ...postData });
+    } else {
+      res = await apiPost({ action: 'createPost', ...postData });
+    }
+
+    if (res.success) {
+      closeModal();
+      showToast('投稿しました ✓');
+      await loadPosts();
+    } else {
+      showToast('エラーが発生しました');
+    }
+  } catch (e) {
+    console.error(e);
+    showToast('エラーが発生しました');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '投稿する';
+}
+
+// ==========================================
+// Lightbox
+// ==========================================
+function openLightbox(url, type) {
+  const lb = document.getElementById('lightbox');
+  const content = document.getElementById('lightboxContent');
+  if (type === 'video') {
+    content.innerHTML = `<video src="${toDirectUrl(url)}" controls autoplay playsinline style="max-width:100%;max-height:80vh"></video>`;
+  } else {
+    content.innerHTML = `<img src="${toDirectUrl(url)}" style="max-width:100%;max-height:80vh;object-fit:contain">`;
+  }
+  lb.classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightboxContent').innerHTML = '';
+}
+
+// ==========================================
+// Modal
+// ==========================================
+function openModal() {
+  editingPostId = null;
+  pendingFiles = [];
+  document.getElementById('formCatGrid').querySelectorAll('.cat-checkbox').forEach(c => c.checked = false);
+  document.getElementById('mediaPicker').querySelectorAll('.media-thumb').forEach(t => t.remove());
+  document.getElementById('postTitle').value = '';
+  document.getElementById('postComment').value = '';
+  document.getElementById('postTags').value = '';
+  document.getElementById('shootingDate').value = '';
+  document.getElementById('submitBtn').textContent = '投稿する';
+  document.getElementById('modal').querySelector('.modal-title').textContent = '新しい投稿';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+async function openEditModal(id) {
+  const data = await apiGet({ action: 'getPost', id });
+  if (!data.success) { showToast('読み込みエラー'); return; }
+  const post = data.post;
+  editingPostId = id;
+  pendingFiles = [];
+
+  document.getElementById('formCatGrid').querySelectorAll('.cat-checkbox').forEach(c => {
+    c.checked = String(post.categories || '').split(',').map(s => s.trim()).includes(c.value);
+  });
+  document.getElementById('mediaPicker').querySelectorAll('.media-thumb').forEach(t => t.remove());
+  document.getElementById('postTitle').value = post.title || '';
+  document.getElementById('postComment').value = post.comment || '';
+  document.getElementById('postTags').value = post.tags || '';
+  const d = new Date(post.shootingDate);
+  document.getElementById('shootingDate').value = d.toISOString().slice(0,16);
+  document.getElementById('submitBtn').textContent = '更新する';
+  document.getElementById('modal').querySelector('.modal-title').textContent = '投稿を編集';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ==========================================
+// Bind Events
+// ==========================================
+function bindEvents() {
+  document.getElementById('fabBtn').addEventListener('click', openModal);
+  document.getElementById('submitBtn').addEventListener('click', submitPost);
+  document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox').addEventListener('click', e => {
+    if (e.target === document.getElementById('lightbox')) closeLightbox();
+  });
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  });
+
+  document.getElementById('addMediaBtn').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('fileInput').addEventListener('change', async e => {
+    await addFiles([...e.target.files]);
+    e.target.value = '';
+  });
+
+  document.getElementById('dateAutoBtn').addEventListener('click', async () => {
+    const firstImg = pendingFiles.find(f => f && f.exifDate);
+    if (firstImg) {
+      document.getElementById('shootingDate').value = firstImg.exifDate;
+      showToast('Exif日時をセットしました');
+    } else {
+      showToast('Exif情報が見つかりません');
+    }
+  });
+
+  document.getElementById('searchToggle').addEventListener('click', () => {
+    document.getElementById('searchBar').classList.toggle('visible');
+    if (document.getElementById('searchBar').classList.contains('visible')) {
+      document.getElementById('searchInput').focus();
+    }
+  });
+
+  let searchTimer;
+  document.getElementById('searchInput').addEventListener('input', e => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      currentSearch = e.target.value.trim();
+      loadPosts();
+    }, 500);
+  });
+}
+
+// ==========================================
+// Utilities
+// ==========================================
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function isVideoUrl(url) {
+  return /\.(mp4|mov|m4v|avi|webm)/i.test(url);
+}
+
+function fileToThumb(fileUrl) {
+  const match = fileUrl.match(/\/d\/([^/]+)/);
+  if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
+  return fileUrl;
+}
+
+function toDirectUrl(fileUrl) {
+  const match = fileUrl.match(/\/d\/([^/]+)/);
+  if (match) return `https://drive.google.com/uc?id=${match[1]}`;
+  return fileUrl;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showError(msg) {
+  document.getElementById('timeline').innerHTML = `<div class="empty-state"><div class="emoji">⚠️</div><p>${msg}</p></div>`;
+}
+</script>
+</body>
+</html>
