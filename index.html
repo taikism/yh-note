@@ -1039,14 +1039,6 @@ function renderTimeline(posts, total) {
         img.addEventListener('click', () => openLightbox(img.dataset.url, 'image'));
       }
     });
-
-    // 動画タップ → Google Driveで開く（location.hrefでSafariブロック回避）
-    carousel.querySelectorAll('.video-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const url = item.dataset.viewUrl;
-        if (url) location.href = url;
-      });
-    });
   });
 
   el.querySelectorAll('.edit-btn').forEach(btn => {
@@ -1082,13 +1074,15 @@ function renderCard(post, i) {
       if (isVid) {
         const fileId = getFileId(f);
         const viewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : f;
-        return `<div class="media-scroll-item video-item" data-view-url="${viewUrl}" style="position:relative;cursor:pointer">
-          <div style="width:100%;height:260px;background:linear-gradient(135deg,#1a1a2e,#252540);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;pointer-events:none">
-            <div style="width:64px;height:64px;border-radius:50%;background:rgba(232,168,124,0.2);border:2px solid rgba(232,168,124,0.6);display:flex;align-items:center;justify-content:center">
-              <span style="font-size:24px;margin-left:4px">▶</span>
+        return `<div class="media-scroll-item" style="position:relative">
+          <a href="${viewUrl}" target="_blank" rel="noopener" style="display:block;text-decoration:none">
+            <div style="width:100%;height:260px;background:linear-gradient(135deg,#1a1a2e,#252540);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+              <div style="width:64px;height:64px;border-radius:50%;background:rgba(232,168,124,0.2);border:2px solid rgba(232,168,124,0.6);display:flex;align-items:center;justify-content:center">
+                <span style="font-size:24px;margin-left:4px;color:white">▶</span>
+              </div>
+              <span style="color:var(--text-muted);font-size:12px">タップして動画を再生</span>
             </div>
-            <span style="color:var(--text-muted);font-size:12px">タップして動画を再生</span>
-          </div>
+          </a>
         </div>`;
       } else {
         return `<div class="media-scroll-item">
