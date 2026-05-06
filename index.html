@@ -787,6 +787,7 @@
 
     <div style="padding: 8px 20px 0;">
       <button class="submit-btn" id="deleteBtn" style="background:linear-gradient(135deg,#ff4444,#cc2222);display:none;margin-top:0">🗑 この投稿を削除する</button>
+      <button id="cancelBtn" style="display:none;width:100%;padding:14px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;margin-top:8px">キャンセル</button>
     </div>
   </div>
 </div>
@@ -1350,22 +1351,24 @@ function removeTempCard(tempId) {
 function openLightbox(url, type) {
   const lb = document.getElementById('lightbox');
   const content = document.getElementById('lightboxContent');
+  const fileId = getFileId(url);
+
   if (type === 'video') {
-    const fileId = getFileId(url);
+    // 動画はaタグで処理済みなのでここには来ないが念のため
     if (fileId) {
-      // iOSはiframe埋め込みが効かないのでGoogle Drive視聴ページを直接開く
       window.open(`https://drive.google.com/file/d/${fileId}/view`, '_blank');
       return;
-    } else {
-      content.innerHTML = `<video src="${url}" controls autoplay playsinline
-        style="max-width:90vw;max-height:70vh;border-radius:8px"></video>`;
     }
   } else {
-    const directUrl = toDirectUrl(url);
-    content.innerHTML = `<img src="${directUrl}"
-      style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px">`;
+    // 画像：高解像度サムネイルURLで表示（Safari対応）
+    const imgUrl = fileId
+      ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`
+      : url;
+    content.innerHTML = `<img src="${imgUrl}"
+      style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px"
+      onerror="this.src='${url}'">`;
+    lb.classList.add('open');
   }
-  lb.classList.add('open');
 }
 
 function closeLightbox() {
@@ -1387,6 +1390,7 @@ function openModal() {
   document.getElementById('shootingDate').value = '';
   document.getElementById('submitBtn').textContent = '投稿する';
   document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('cancelBtn').style.display = 'none';
   document.getElementById('modal').querySelector('.modal-title').textContent = '新しい投稿';
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -1409,6 +1413,7 @@ async function openEditModal(id) {
   document.getElementById('shootingDate').value = d.toISOString().slice(0,16);
   document.getElementById('submitBtn').textContent = '更新する';
   document.getElementById('deleteBtn').style.display = 'block';
+  document.getElementById('cancelBtn').style.display = 'block';
   document.getElementById('modal').querySelector('.modal-title').textContent = '投稿を編集';
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -1423,6 +1428,7 @@ function closeModal() {
 function bindEvents() {
   document.getElementById('fabBtn').addEventListener('click', openModal);
   document.getElementById('submitBtn').addEventListener('click', submitPost);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
   document.getElementById('deleteBtn').addEventListener('click', async () => {
     if (!editingPostId) return;
     if (!confirm('この投稿を削除しますか？')) return;
