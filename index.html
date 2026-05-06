@@ -117,7 +117,7 @@
     position: sticky;
     top: calc(var(--safe-top) + 56px);
     z-index: 90;
-    padding: 8px 0;
+    padding: 8px 0 4px;
     background: linear-gradient(180deg, var(--bg) 80%, transparent);
   }
 
@@ -129,6 +129,54 @@
     scrollbar-width: none;
   }
   .category-scroll::-webkit-scrollbar { display: none; }
+
+  /* 年月フィルター */
+  .month-filter-scroll {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 6px 16px 4px;
+    scrollbar-width: none;
+  }
+  .month-filter-scroll::-webkit-scrollbar { display: none; }
+
+  .month-tab {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .month-tab.active {
+    background: var(--accent2);
+    color: #fff;
+    border-color: var(--accent2);
+    font-weight: 700;
+  }
+
+  /* さらに表示ボタン */
+  .load-more-btn {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 8px 20px 20px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .load-more-btn:active { background: var(--surface2); }
 
   .cat-tab {
     flex-shrink: 0;
@@ -681,6 +729,7 @@
 <!-- CATEGORY TABS -->
 <div class="category-tabs" style="padding-top: calc(env(safe-area-inset-top, 0px) + 60px);">
   <div class="category-scroll" id="categoryTabs"></div>
+  <div class="month-filter-scroll" id="monthTabs"></div>
 </div>
 
 <!-- TIMELINE -->
@@ -773,7 +822,10 @@ const CATEGORIES = [
 // ==========================================
 let currentCategory = 'all';
 let currentSearch = '';
+let currentMonth = 'all';
 let posts = [];
+let allPosts = []; // 全件キャッシュ
+let displayCount = 30; // 表示件数
 let pendingFiles = []; // {file, previewUrl, base64, mimeType, exifDate}
 let editingPostId = null;
 
@@ -797,7 +849,45 @@ function buildCategoryTabs() {
       el.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentCategory = btn.dataset.id;
-      loadPosts();
+      currentMonth = 'all';
+      displayCount = 30;
+      applyFilters();
+    });
+  });
+}
+
+function buildMonthTabs(posts) {
+  // 投稿から年月一覧を生成
+  const monthSet = new Set();
+  posts.forEach(p => {
+    const d = new Date(p.shootingDate);
+    if (!isNaN(d)) {
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      monthSet.add(key);
+    }
+  });
+  // 新しい順にソート
+  const months = [...monthSet].sort().reverse();
+
+  const el = document.getElementById('monthTabs');
+  if (months.length === 0) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `<button class="month-tab active" data-month="all">すべて</button>` +
+    months.map(m => {
+      const [y, mo] = m.split('-');
+      const now = new Date();
+      const isThisYear = parseInt(y) === now.getFullYear();
+      const label = isThisYear ? `${parseInt(mo)}月` : `${String(y).slice(2)}年${parseInt(mo)}月`;
+      return `<button class="month-tab" data-month="${m}">${label}</button>`;
+    }).join('');
+
+  el.querySelectorAll('.month-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      el.querySelectorAll('.month-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMonth = btn.dataset.month;
+      displayCount = 30;
+      applyFilters();
     });
   });
 }
@@ -831,18 +921,20 @@ async function apiPost(body) {
 }
 
 // ==========================================
-// Load Posts
+// Load Posts（全件取得してキャッシュ）
 // ==========================================
 async function loadPosts() {
   document.getElementById('timeline').innerHTML = '<div class="loader"><div class="spinner"></div><span>読み込み中…</span></div>';
   try {
-    const params = { action: 'getPosts', limit: 30 };
+    const params = { action: 'getPosts', limit: 9999 };
     if (currentCategory !== 'all') params.category = currentCategory;
     if (currentSearch) params.search = currentSearch;
     const data = await apiGet(params);
     if (data.success) {
-      posts = data.posts;
-      renderTimeline(posts);
+      allPosts = data.posts;
+      buildMonthTabs(allPosts);
+      displayCount = 30;
+      applyFilters();
     } else {
       showError('読み込みに失敗しました');
     }
@@ -852,10 +944,26 @@ async function loadPosts() {
   }
 }
 
+// フィルター適用（年月・ページング）
+function applyFilters() {
+  let filtered = allPosts;
+
+  // 年月フィルター
+  if (currentMonth !== 'all') {
+    const [fy, fm] = currentMonth.split('-').map(Number);
+    filtered = filtered.filter(p => {
+      const d = new Date(p.shootingDate);
+      return d.getFullYear() === fy && (d.getMonth() + 1) === fm;
+    });
+  }
+
+  renderTimeline(filtered.slice(0, displayCount), filtered.length);
+}
+
 // ==========================================
 // Render Timeline
 // ==========================================
-function renderTimeline(posts) {
+function renderTimeline(posts, total) {
   const el = document.getElementById('timeline');
   if (!posts.length) {
     el.innerHTML = '<div class="empty-state"><div class="emoji">📷</div><p>まだ投稿がありません。<br>＋ボタンから最初の思い出を投稿しましょう！</p></div>';
@@ -875,7 +983,21 @@ function renderTimeline(posts) {
     html += renderCard(post, i);
   });
 
+  // さらに表示ボタン
+  if (total && posts.length < total) {
+    html += `<button class="load-more-btn" id="loadMoreBtn">さらに表示（残り${total - posts.length}件）</button>`;
+  }
+
   el.innerHTML = html;
+
+  // さらに表示ボタンイベント
+  const loadMoreBtn = el.querySelector('#loadMoreBtn');
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+      displayCount += 30;
+      applyFilters();
+    });
+  }
 
   // カルーセルのスクロール・タップイベント
   el.querySelectorAll('.media-carousel').forEach(carousel => {
@@ -894,27 +1016,11 @@ function renderTimeline(posts) {
       }, { passive: true });
     }
 
-    // 画像タップ → ライトボックス、動画タップ → インライン再生
+    // 画像タップ → ライトボックス
     items.forEach(item => {
-      const img = item.querySelector('img');
-      const video = item.querySelector('video');
+      const img = item.querySelector('img[data-url]');
       if (img) {
         img.addEventListener('click', () => openLightbox(img.dataset.url, 'image'));
-      }
-      if (video) {
-        const playBtn = item.querySelector('.media-play-btn');
-        video.addEventListener('click', () => {
-          if (video.paused) {
-            video.play();
-            if (playBtn) playBtn.style.display = 'none';
-          } else {
-            video.pause();
-            if (playBtn) playBtn.style.display = 'flex';
-          }
-        });
-        video.addEventListener('ended', () => {
-          if (playBtn) playBtn.style.display = 'flex';
-        });
       }
     });
   });
@@ -952,16 +1058,13 @@ function renderCard(post, i) {
       if (isVid) {
         const fileId = getFileId(f);
         const viewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : f;
-        const thumb = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : '';
         return `<div class="media-scroll-item" style="position:relative;cursor:pointer" onclick="window.open('${viewUrl}','_blank')">
-          ${thumb
-            ? `<img src="${thumb}" loading="lazy" style="width:100%;max-height:420px;object-fit:cover;display:block">`
-            : `<div style="width:100%;height:280px;background:#111;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">
-                <span style="font-size:48px">🎬</span>
-                <span style="color:#888;font-size:12px">動画</span>
-              </div>`
-          }
-          <div class="media-play-btn" style="pointer-events:none">▶</div>
+          <div style="width:100%;height:260px;background:linear-gradient(135deg,#1a1a2e,#252540);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+            <div style="width:64px;height:64px;border-radius:50%;background:rgba(232,168,124,0.2);border:2px solid rgba(232,168,124,0.6);display:flex;align-items:center;justify-content:center">
+              <span style="font-size:24px;margin-left:4px">▶</span>
+            </div>
+            <span style="color:var(--text-muted);font-size:12px">タップして動画を再生</span>
+          </div>
         </div>`;
       } else {
         return `<div class="media-scroll-item">
