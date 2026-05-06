@@ -222,53 +222,90 @@
     flex-shrink: 0;
   }
 
-  /* メディアグリッド */
-  .media-grid { position: relative; background: #000; }
+  /* メディアカルーセル */
+  .media-carousel {
+    position: relative;
+    overflow: hidden;
+  }
 
-  .media-grid.single img,
-  .media-grid.single video {
+  .media-scroll {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .media-scroll::-webkit-scrollbar { display: none; }
+
+  .media-scroll-item {
+    flex-shrink: 0;
     width: 100%;
-    max-height: 480px;
+    scroll-snap-align: start;
+    position: relative;
+    background: #000;
+  }
+
+  .media-scroll-item img {
+    width: 100%;
+    max-height: 420px;
     object-fit: cover;
     display: block;
   }
 
-  .media-grid.multi {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px;
-  }
-  .media-grid.multi img,
-  .media-grid.multi video {
-    width: 100%; height: 180px;
+  .media-scroll-item video {
+    width: 100%;
+    max-height: 420px;
     object-fit: cover;
     display: block;
   }
-  .media-grid.multi.three img:first-child {
-    grid-column: 1 / -1;
-    height: 220px;
-  }
 
-  .media-count-overlay {
+  .media-play-btn {
     position: absolute;
-    bottom: 8px; right: 8px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 22px;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+  }
+
+  /* ページインジケーター */
+  .media-dots {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    pointer-events: none;
+  }
+
+  .media-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    transition: background 0.2s, transform 0.2s;
+  }
+  .media-dot.active {
+    background: #fff;
+    transform: scale(1.3);
+  }
+
+  /* 枚数バッジ */
+  .media-count-badge {
+    position: absolute;
+    top: 8px; right: 8px;
     background: rgba(0,0,0,0.6);
     color: #fff;
     font-size: 11px;
     padding: 3px 8px;
     border-radius: 12px;
-    backdrop-filter: blur(4px);
-  }
-
-  .video-badge {
-    position: absolute;
-    top: 8px; left: 8px;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    font-size: 18px;
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(4px);
   }
 
@@ -667,9 +704,6 @@
     <div class="modal-title">新しい投稿</div>
 
     <div class="form-section">
-      <label class="form-label">📁 カテゴリー（複数選択可）</label>
-      <div class="cat-grid" id="formCatGrid"></div>
-
       <label class="form-label">📷 写真・動画</label>
       <div class="media-picker" id="mediaPicker">
         <div class="add-media-btn" id="addMediaBtn">
@@ -679,23 +713,32 @@
       </div>
       <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none">
 
-      <label class="form-label">📅 撮影日時</label>
-      <div class="date-row">
-        <input class="form-input" type="datetime-local" id="shootingDate">
-        <button class="date-auto-btn" id="dateAutoBtn">Exifから取得</button>
-      </div>
+      <label class="form-label">📁 カテゴリー（複数選択可）<span style="color:#ff6b6b;margin-left:4px">*必須</span></label>
+      <div class="cat-grid" id="formCatGrid"></div>
 
       <label class="form-label">✏️ タイトル</label>
       <input class="form-input" type="text" id="postTitle" placeholder="タイトルを入力…">
 
       <label class="form-label">💬 コメント</label>
       <textarea class="form-textarea" id="postComment" placeholder="コメントを入力…" rows="3"></textarea>
+    </div>
+
+    <button class="submit-btn" id="submitBtn">投稿する</button>
+
+    <div class="form-section" style="margin-top:8px">
+      <label class="form-label">📅 撮影日時</label>
+      <div class="date-row">
+        <input class="form-input" type="datetime-local" id="shootingDate">
+        <button class="date-auto-btn" id="dateAutoBtn">自動取得</button>
+      </div>
 
       <label class="form-label">🏷 タグ（スペース区切り）</label>
       <input class="form-input" type="text" id="postTags" placeholder="例: 公園 お出かけ 夏">
     </div>
 
-    <button class="submit-btn" id="submitBtn">投稿する</button>
+    <div style="padding: 8px 20px 0;">
+      <button class="submit-btn" id="deleteBtn" style="background:linear-gradient(135deg,#ff4444,#cc2222);display:none;margin-top:0">🗑 この投稿を削除する</button>
+    </div>
   </div>
 </div>
 
@@ -718,7 +761,7 @@ const CATEGORIES = [
   { id: '08_family',            label: '👨‍👩‍👧‍👦 家族',        color: 'c-08' },
   { id: '09_people',            label: '🧑‍🤝‍🧑 人々',        color: 'c-09' },
   { id: '10_koharinkens-kitchen', label: '🌸🦁 子供キッチン', color: 'c-10' },
-  { id: '11_taikism-kitchen',   label: '🌊 タイ料理',    color: 'c-11' },
+  { id: '11_taikism-kitchen',   label: '🍜 大貴料理',    color: 'c-11' },
   { id: '12_other-kitchen',     label: '🍽 その他料理',  color: 'c-12' },
   { id: '21_hope',              label: '✨ Hope',         color: 'c-21' },
   { id: '99_remember',          label: '💭 Remember',    color: 'c-99' },
@@ -833,9 +876,49 @@ function renderTimeline(posts) {
   });
 
   el.innerHTML = html;
-  el.querySelectorAll('.media-thumb-view').forEach(el => {
-    el.addEventListener('click', () => openLightbox(el.dataset.url, el.dataset.type));
+
+  // カルーセルのスクロール・タップイベント
+  el.querySelectorAll('.media-carousel').forEach(carousel => {
+    const scroll = carousel.querySelector('.media-scroll');
+    const dots = carousel.querySelectorAll('.media-dot');
+    const badge = carousel.querySelector('.media-count-badge');
+    const items = carousel.querySelectorAll('.media-scroll-item');
+    const total = items.length;
+
+    // スクロールでドット・バッジ更新
+    if (scroll && total > 1) {
+      scroll.addEventListener('scroll', () => {
+        const idx = Math.round(scroll.scrollLeft / scroll.offsetWidth);
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (badge) badge.textContent = `${idx + 1} / ${total}`;
+      }, { passive: true });
+    }
+
+    // 画像タップ → ライトボックス、動画タップ → インライン再生
+    items.forEach(item => {
+      const img = item.querySelector('img');
+      const video = item.querySelector('video');
+      if (img) {
+        img.addEventListener('click', () => openLightbox(img.dataset.url, 'image'));
+      }
+      if (video) {
+        const playBtn = item.querySelector('.media-play-btn');
+        video.addEventListener('click', () => {
+          if (video.paused) {
+            video.play();
+            if (playBtn) playBtn.style.display = 'none';
+          } else {
+            video.pause();
+            if (playBtn) playBtn.style.display = 'flex';
+          }
+        });
+        video.addEventListener('ended', () => {
+          if (playBtn) playBtn.style.display = 'flex';
+        });
+      }
+    });
   });
+
   el.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => openEditModal(btn.dataset.id));
   });
@@ -855,28 +938,38 @@ function renderCard(post, i) {
   const thumbUrl = post.thumbnailUrl || (files[0] ? fileToThumb(files[0]) : '');
 
   let mediaHtml = '';
-  if (files.length === 1) {
-    const isVideo = isVideoUrl(files[0]);
-    mediaHtml = `<div class="media-grid single">
-      ${isVideo
-        ? `<video src="${toDirectUrl(files[0])}" class="media-thumb-view" data-url="${files[0]}" data-type="video" preload="metadata" playsinline></video><div class="video-badge">▶</div>`
-        : `<img src="${thumbUrl}" class="media-thumb-view" data-url="${files[0]}" data-type="image" loading="lazy">`
-      }
-    </div>`;
-  } else if (files.length > 1) {
-    const shown = files.slice(0, 4);
-    const cls = shown.length === 2 ? 'multi' : shown.length === 3 ? 'multi three' : 'multi';
-    const thumbsHtml = shown.map(f => {
+  if (files.length > 0) {
+    const dotsHtml = files.length > 1
+      ? `<div class="media-dots">${files.map((_, i) => `<div class="media-dot${i === 0 ? ' active' : ''}" data-index="${i}"></div>`).join('')}</div>`
+      : '';
+    const countBadge = files.length > 1
+      ? `<div class="media-count-badge">1 / ${files.length}</div>`
+      : '';
+
+    const itemsHtml = files.map(f => {
       const isVid = isVideoUrl(f);
-      return isVid
-        ? `<video src="${toDirectUrl(f)}" class="media-thumb-view" data-url="${f}" data-type="video" preload="metadata" playsinline></video>`
-        : `<img src="${fileToThumb(f)}" class="media-thumb-view" data-url="${f}" data-type="image" loading="lazy">`;
+      const directUrl = toDirectUrl(f);
+      if (isVid) {
+        return `<div class="media-scroll-item">
+          <video src="${directUrl}" preload="metadata" playsinline
+            style="width:100%;max-height:420px;object-fit:cover;display:block"
+            data-url="${f}" data-type="video"></video>
+          <div class="media-play-btn">▶</div>
+        </div>`;
+      } else {
+        return `<div class="media-scroll-item">
+          <img src="${fileToThumb(f)}" loading="lazy"
+            style="width:100%;max-height:420px;object-fit:cover;display:block"
+            data-url="${f}" data-type="image">
+        </div>`;
+      }
     }).join('');
-    mediaHtml = `<div class="media-grid ${cls}" style="position:relative">
-      ${thumbsHtml}
-      ${files.length > 4 ? `<div class="media-count-overlay">+${files.length - 4}</div>` : ''}
+
+    mediaHtml = `<div class="media-carousel" data-post-id="${post.id}">
+      <div class="media-scroll" id="scroll-${post.id}">${itemsHtml}</div>
+      ${dotsHtml}
+      ${countBadge}
     </div>`;
-  }
 
   const tags = String(post.tags || '').trim();
   const tagsHtml = tags ? tags.split(/\s+/).map(t => `<span class="tag">#${t}</span>`).join('') : '';
@@ -935,15 +1028,28 @@ function readExifDate(file) {
 async function addFiles(files) {
   for (const file of files) {
     const previewUrl = URL.createObjectURL(file);
-    const exifDate = file.type.startsWith('image/') ? await readExifDate(file) : null;
+    let exifDate = null;
+
+    if (file.type.startsWith('image/')) {
+      // 画像：Exifから撮影日時を取得
+      exifDate = await readExifDate(file);
+    } else if (file.type.startsWith('video/')) {
+      // 動画：ファイルの最終更新日時を使用
+      exifDate = new Date(file.lastModified).toISOString().slice(0, 16);
+    } else {
+      // その他：投稿日時（現在時刻）
+      exifDate = new Date().toISOString().slice(0, 16);
+    }
+
     pendingFiles.push({ file, previewUrl, exifDate, mimeType: file.type });
     addMediaThumb(pendingFiles.length - 1, previewUrl, file.type);
   }
-  // 最初のファイルのExif日付を日付フィールドにセット
-  if (pendingFiles.length > 0 && !document.getElementById('shootingDate').value) {
-    const firstExif = pendingFiles.find(f => f.exifDate);
-    if (firstExif) {
-      document.getElementById('shootingDate').value = firstExif.exifDate;
+
+  // 最初のファイルの日時を自動セット（まだ未設定の場合）
+  if (!document.getElementById('shootingDate').value) {
+    const first = pendingFiles.find(f => f && f.exifDate);
+    if (first) {
+      document.getElementById('shootingDate').value = first.exifDate;
     }
   }
 }
@@ -982,8 +1088,10 @@ async function submitPost() {
     ? new Date(document.getElementById('shootingDate').value).toISOString()
     : new Date().toISOString();
 
-  if (!checkedCats.length && !title && !comment) {
-    showToast('カテゴリーかタイトルを入力してください');
+  if (!checkedCats.length) {
+    showToast('カテゴリーを選択してください');
+    btn.disabled = false;
+    btn.textContent = editingPostId ? '更新する' : '投稿する';
     return;
   }
 
@@ -1113,10 +1221,13 @@ function removeTempCard(tempId) {
 function openLightbox(url, type) {
   const lb = document.getElementById('lightbox');
   const content = document.getElementById('lightboxContent');
+  const directUrl = toDirectUrl(url);
   if (type === 'video') {
-    content.innerHTML = `<video src="${toDirectUrl(url)}" controls autoplay playsinline style="max-width:100%;max-height:80vh"></video>`;
+    content.innerHTML = `<video src="${directUrl}" controls autoplay playsinline
+      style="max-width:100%;max-height:80vh;border-radius:8px"></video>`;
   } else {
-    content.innerHTML = `<img src="${toDirectUrl(url)}" style="max-width:100%;max-height:80vh;object-fit:contain">`;
+    content.innerHTML = `<img src="${directUrl}"
+      style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:8px">`;
   }
   lb.classList.add('open');
 }
@@ -1139,6 +1250,7 @@ function openModal() {
   document.getElementById('postTags').value = '';
   document.getElementById('shootingDate').value = '';
   document.getElementById('submitBtn').textContent = '投稿する';
+  document.getElementById('deleteBtn').style.display = 'none';
   document.getElementById('modal').querySelector('.modal-title').textContent = '新しい投稿';
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -1160,6 +1272,7 @@ async function openEditModal(id) {
   const d = new Date(post.shootingDate);
   document.getElementById('shootingDate').value = d.toISOString().slice(0,16);
   document.getElementById('submitBtn').textContent = '更新する';
+  document.getElementById('deleteBtn').style.display = 'block';
   document.getElementById('modal').querySelector('.modal-title').textContent = '投稿を編集';
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -1174,6 +1287,18 @@ function closeModal() {
 function bindEvents() {
   document.getElementById('fabBtn').addEventListener('click', openModal);
   document.getElementById('submitBtn').addEventListener('click', submitPost);
+  document.getElementById('deleteBtn').addEventListener('click', async () => {
+    if (!editingPostId) return;
+    if (!confirm('この投稿を削除しますか？')) return;
+    const res = await apiPost({ action: 'deletePost', id: editingPostId });
+    if (res.success) {
+      closeModal();
+      showToast('削除しました');
+      await loadPosts();
+    } else {
+      showToast('削除に失敗しました');
+    }
+  });
   document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
   document.getElementById('lightbox').addEventListener('click', e => {
     if (e.target === document.getElementById('lightbox')) closeLightbox();
