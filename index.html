@@ -927,8 +927,6 @@ async function loadPosts() {
   document.getElementById('timeline').innerHTML = '<div class="loader"><div class="spinner"></div><span>読み込み中…</span></div>';
   try {
     const params = { action: 'getPosts', limit: 9999 };
-    if (currentCategory !== 'all') params.category = currentCategory;
-    if (currentSearch) params.search = currentSearch;
     const data = await apiGet(params);
     if (data.success) {
       allPosts = data.posts;
@@ -948,6 +946,14 @@ async function loadPosts() {
 function applyFilters() {
   let filtered = allPosts;
 
+  // カテゴリーフィルター
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(p => {
+      const cats = String(p.categories || '').split(',').map(c => c.trim());
+      return cats.includes(currentCategory);
+    });
+  }
+
   // 年月フィルター
   if (currentMonth !== 'all') {
     const [fy, fm] = currentMonth.split('-').map(Number);
@@ -955,6 +961,16 @@ function applyFilters() {
       const d = new Date(p.shootingDate);
       return d.getFullYear() === fy && (d.getMonth() + 1) === fm;
     });
+  }
+
+  // キーワード検索（ローカル）
+  if (currentSearch) {
+    const kw = currentSearch.toLowerCase();
+    filtered = filtered.filter(p =>
+      String(p.title || '').toLowerCase().includes(kw) ||
+      String(p.comment || '').toLowerCase().includes(kw) ||
+      String(p.tags || '').toLowerCase().includes(kw)
+    );
   }
 
   renderTimeline(filtered.slice(0, displayCount), filtered.length);
@@ -1023,6 +1039,14 @@ function renderTimeline(posts, total) {
         img.addEventListener('click', () => openLightbox(img.dataset.url, 'image'));
       }
     });
+
+    // 動画タップ → Google Driveで開く（location.hrefでSafariブロック回避）
+    carousel.querySelectorAll('.video-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const url = item.dataset.viewUrl;
+        if (url) location.href = url;
+      });
+    });
   });
 
   el.querySelectorAll('.edit-btn').forEach(btn => {
@@ -1058,8 +1082,8 @@ function renderCard(post, i) {
       if (isVid) {
         const fileId = getFileId(f);
         const viewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : f;
-        return `<div class="media-scroll-item" style="position:relative;cursor:pointer" onclick="window.open('${viewUrl}','_blank')">
-          <div style="width:100%;height:260px;background:linear-gradient(135deg,#1a1a2e,#252540);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+        return `<div class="media-scroll-item video-item" data-view-url="${viewUrl}" style="position:relative;cursor:pointer">
+          <div style="width:100%;height:260px;background:linear-gradient(135deg,#1a1a2e,#252540);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;pointer-events:none">
             <div style="width:64px;height:64px;border-radius:50%;background:rgba(232,168,124,0.2);border:2px solid rgba(232,168,124,0.6);display:flex;align-items:center;justify-content:center">
               <span style="font-size:24px;margin-left:4px">▶</span>
             </div>
@@ -1455,8 +1479,9 @@ function bindEvents() {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       currentSearch = e.target.value.trim();
-      loadPosts();
-    }, 500);
+      displayCount = 30;
+      applyFilters();
+    }, 300);
   });
 }
 
