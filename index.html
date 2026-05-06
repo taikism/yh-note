@@ -970,6 +970,7 @@ function renderCard(post, i) {
       ${dotsHtml}
       ${countBadge}
     </div>`;
+  }
 
   const tags = String(post.tags || '').trim();
   const tagsHtml = tags ? tags.split(/\s+/).map(t => `<span class="tag">#${t}</span>`).join('') : '';
