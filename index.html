@@ -1221,14 +1221,16 @@ function renderCard(post, i) {
 
   return `<div class="post-card" style="animation-delay:${i * 0.05}s">
     <div class="post-header">
-      <div class="post-cats">${catBadges || '<span style="color:var(--text-muted);font-size:11px">カテゴリなし</span>'}</div>
+      <div style="flex:1;min-width:0">
+        ${post.title ? `<div class="post-title" style="margin-bottom:0">${escHtml(post.title)}</div>` : '<span style="color:var(--text-muted);font-size:12px">無題</span>'}
+      </div>
       <span class="post-date">${dateStr}</span>
     </div>
     ${mediaHtml}
     <div class="post-body">
-      ${post.title ? `<div class="post-title">${escHtml(post.title)}</div>` : ''}
       ${post.comment ? `<div class="post-comment">${escHtml(post.comment)}</div>` : ''}
       ${tagsHtml ? `<div class="post-tags">${tagsHtml}</div>` : ''}
+      <div class="post-cats" style="margin-top:10px">${catBadges || '<span style="color:var(--text-muted);font-size:11px">カテゴリなし</span>'}</div>
     </div>
     <div class="post-actions">
       <button class="action-btn edit-btn" data-id="${post.id}">✏️ 編集</button>
@@ -1464,14 +1466,16 @@ function insertTempCard(tempId, { checkedCats, title, comment, tags, shootingDat
   card.style.opacity = '0.7';
   card.innerHTML = `
     <div class="post-header">
-      <div class="post-cats">${cats || '<span style="color:var(--text-muted);font-size:11px">カテゴリなし</span>'}</div>
+      <div style="flex:1;min-width:0">
+        ${title ? `<div class="post-title" style="margin-bottom:0">${escHtml(title)}</div>` : '<span style="color:var(--text-muted);font-size:12px">無題</span>'}
+      </div>
       <span class="post-date">${dateStr}</span>
     </div>
     ${mediaHtml}
     <div class="post-body">
-      ${title ? `<div class="post-title">${escHtml(title)}</div>` : ''}
       ${comment ? `<div class="post-comment">${escHtml(comment)}</div>` : ''}
       ${tagsHtml ? `<div class="post-tags">${tagsHtml}</div>` : ''}
+      <div class="post-cats" style="margin-top:10px">${cats || '<span style="color:var(--text-muted);font-size:11px">カテゴリなし</span>'}</div>
       <div style="margin-top:8px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
         <div class="spinner" style="width:14px;height:14px;border-width:2px"></div> アップロード中…
       </div>
