@@ -39,13 +39,22 @@
   }
 
   /* ==================== HEADER ==================== */
+  /* ステータスバー透け防止の黒帯 */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--safe-top);
+    background: var(--bg);
+    z-index: 200;
+  }
+
   .header {
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 100;
-    padding: calc(var(--safe-top) + 12px) 16px 12px;
-    background: linear-gradient(180deg, rgba(15,15,26,0.98) 0%, rgba(15,15,26,0.0) 100%);
-    backdrop-filter: blur(8px);
+    padding: calc(var(--safe-top) + 10px) 16px 8px;
+    background: var(--bg);
   }
 
   .header-inner {
@@ -115,10 +124,10 @@
   /* ==================== CATEGORY TABS ==================== */
   .category-tabs {
     position: sticky;
-    top: calc(var(--safe-top) + 56px);
+    top: calc(var(--safe-top) + 50px);
     z-index: 90;
-    padding: 8px 0 4px;
-    background: linear-gradient(180deg, var(--bg) 80%, transparent);
+    padding: 4px 0;
+    background: var(--bg);
   }
 
   .category-scroll {
@@ -274,6 +283,50 @@
   .media-carousel {
     position: relative;
     overflow: hidden;
+  }
+
+  /* 複数写真のタイルグリッド */
+  .media-tile-grid {
+    display: grid;
+    gap: 2px;
+    background: var(--bg);
+  }
+  .media-tile-grid.cols-1 { grid-template-columns: 1fr; }
+  .media-tile-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .media-tile-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .media-tile {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #000;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .media-tile img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* 1枚のときは縦横比を自由に */
+  .media-tile-grid.cols-1 .media-tile {
+    aspect-ratio: auto;
+  }
+  .media-tile-grid.cols-1 .media-tile img {
+    max-height: 460px;
+    height: auto;
+  }
+  .media-tile-video-badge {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
   }
 
   .media-scroll {
@@ -437,6 +490,97 @@
     font-size: 20px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ==================== 全画面ビューア ==================== */
+  .viewer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    background: #000;
+    touch-action: none;
+  }
+  .viewer.open { display: block; }
+
+  .viewer-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .viewer-track::-webkit-scrollbar { display: none; }
+
+  .viewer-page {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .viewer-page img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transform-origin: center center;
+    will-change: transform;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .viewer-video-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: #fff;
+    text-decoration: none;
+  }
+  .viewer-video-link .play-circle {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(232,168,124,0.2);
+    border: 2px solid rgba(232,168,124,0.8);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+
+  .viewer-close {
+    position: absolute;
+    top: calc(var(--safe-top) + 12px);
+    right: 16px;
+    z-index: 410;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .viewer-counter {
+    position: absolute;
+    top: calc(var(--safe-top) + 18px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 410;
+    color: #fff;
+    font-size: 14px;
+    background: rgba(0,0,0,0.4);
+    padding: 4px 14px;
+    border-radius: 16px;
+    backdrop-filter: blur(4px);
   }
 
   /* ==================== FAB (投稿ボタン) ==================== */
@@ -727,7 +871,7 @@
 </div>
 
 <!-- CATEGORY TABS -->
-<div class="category-tabs" style="padding-top: calc(env(safe-area-inset-top, 0px) + 60px);">
+<div class="category-tabs" style="padding-top: calc(env(safe-area-inset-top, 0px) + 50px);">
   <div class="category-scroll" id="categoryTabs"></div>
   <div class="month-filter-scroll" id="monthTabs"></div>
 </div>
@@ -744,6 +888,13 @@
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightboxClose">✕</button>
   <div id="lightboxContent"></div>
+</div>
+
+<!-- 全画面メディアビューア（スワイプ＋ピンチ拡大） -->
+<div class="viewer" id="viewer">
+  <button class="viewer-close" id="viewerClose">✕</button>
+  <div class="viewer-counter" id="viewerCounter"></div>
+  <div class="viewer-track" id="viewerTrack"></div>
 </div>
 
 <!-- 投稿モーダル -->
@@ -828,6 +979,7 @@ let posts = [];
 let allPosts = []; // 全件キャッシュ
 let displayCount = 30; // 表示件数
 let pendingFiles = []; // {file, previewUrl, base64, mimeType, exifDate}
+let existingFiles = []; // 編集時の既存写真URL配列（削除されると除外される）
 let editingPostId = null;
 
 // ==========================================
@@ -850,7 +1002,6 @@ function buildCategoryTabs() {
       el.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentCategory = btn.dataset.id;
-      currentMonth = 'all';
       displayCount = 30;
       applyFilters();
     });
@@ -1016,28 +1167,15 @@ function renderTimeline(posts, total) {
     });
   }
 
-  // カルーセルのスクロール・タップイベント
-  el.querySelectorAll('.media-carousel').forEach(carousel => {
-    const scroll = carousel.querySelector('.media-scroll');
-    const dots = carousel.querySelectorAll('.media-dot');
-    const badge = carousel.querySelector('.media-count-badge');
-    const items = carousel.querySelectorAll('.media-scroll-item');
-    const total = items.length;
-
-    // スクロールでドット・バッジ更新
-    if (scroll && total > 1) {
-      scroll.addEventListener('scroll', () => {
-        const idx = Math.round(scroll.scrollLeft / scroll.offsetWidth);
-        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-        if (badge) badge.textContent = `${idx + 1} / ${total}`;
-      }, { passive: true });
-    }
-
-    // 画像タップ → ライトボックス
-    items.forEach(item => {
-      const img = item.querySelector('img[data-url]');
-      if (img) {
-        img.addEventListener('click', () => openLightbox(img.dataset.url, 'image'));
+  // タイルタップ → 全画面ビューア起動
+  el.querySelectorAll('.media-tile').forEach(tile => {
+    tile.addEventListener('click', () => {
+      const postId = tile.dataset.postId;
+      const index = parseInt(tile.dataset.index);
+      const post = allPosts.find(p => String(p.id) === String(postId));
+      if (post) {
+        const files = String(post.fileUrls || '').split('|').filter(Boolean);
+        openViewer(files, index);
       }
     });
   });
@@ -1058,47 +1196,24 @@ function renderCard(post, i) {
   }).join('');
 
   const files = String(post.fileUrls || '').split('|').filter(Boolean);
-  const thumbUrl = post.thumbnailUrl || (files[0] ? fileToThumb(files[0]) : '');
 
   let mediaHtml = '';
   if (files.length > 0) {
-    const dotsHtml = files.length > 1
-      ? `<div class="media-dots">${files.map((_, i) => `<div class="media-dot${i === 0 ? ' active' : ''}" data-index="${i}"></div>`).join('')}</div>`
-      : '';
-    const countBadge = files.length > 1
-      ? `<div class="media-count-badge">1 / ${files.length}</div>`
-      : '';
+    // 列数：1枚→1列、2/4枚→2列、3枚以上→3列
+    let cols = 1;
+    if (files.length === 2 || files.length === 4) cols = 2;
+    else if (files.length >= 3) cols = 3;
 
-    const itemsHtml = files.map(f => {
+    const tilesHtml = files.map((f, idx) => {
       const isVid = isVideoUrl(f);
-      const directUrl = toDirectUrl(f);
-      if (isVid) {
-        const fileId = getFileId(f);
-        const viewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : f;
-        return `<div class="media-scroll-item" style="position:relative">
-          <a href="${viewUrl}" target="_blank" rel="noopener" style="display:block;text-decoration:none">
-            <div style="width:100%;height:260px;background:linear-gradient(135deg,#1a1a2e,#252540);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
-              <div style="width:64px;height:64px;border-radius:50%;background:rgba(232,168,124,0.2);border:2px solid rgba(232,168,124,0.6);display:flex;align-items:center;justify-content:center">
-                <span style="font-size:24px;margin-left:4px;color:white">▶</span>
-              </div>
-              <span style="color:var(--text-muted);font-size:12px">タップして動画を再生</span>
-            </div>
-          </a>
-        </div>`;
-      } else {
-        return `<div class="media-scroll-item">
-          <img src="${fileToThumb(f)}" loading="lazy"
-            style="width:100%;max-height:420px;object-fit:cover;display:block"
-            data-url="${f}" data-type="image">
-        </div>`;
-      }
+      const thumb = fileToThumb(f);
+      return `<div class="media-tile" data-post-id="${post.id}" data-index="${idx}">
+        <img src="${thumb}" loading="lazy">
+        ${isVid ? '<div class="media-tile-video-badge">▶</div>' : ''}
+      </div>`;
     }).join('');
 
-    mediaHtml = `<div class="media-carousel" data-post-id="${post.id}">
-      <div class="media-scroll" id="scroll-${post.id}">${itemsHtml}</div>
-      ${dotsHtml}
-      ${countBadge}
-    </div>`;
+    mediaHtml = `<div class="media-tile-grid cols-${cols}">${tilesHtml}</div>`;
   }
 
   const tags = String(post.tags || '').trim();
@@ -1205,6 +1320,32 @@ function addMediaThumb(idx, url, mimeType) {
   picker.insertBefore(thumb, addBtn);
 }
 
+// 編集時：既存写真のサムネイル表示（✕で削除予定にする）
+function addExistingThumb(url, idx) {
+  const picker = document.getElementById('mediaPicker');
+  const addBtn = document.getElementById('addMediaBtn');
+  const isVideo = isVideoUrl(url);
+  const fileId = getFileId(url);
+  const thumbSrc = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w200` : url;
+
+  const thumb = document.createElement('div');
+  thumb.className = 'media-thumb';
+  thumb.dataset.existingUrl = url;
+  thumb.innerHTML = isVideo
+    ? `<div style="width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,#1a1a2e,#252540);display:flex;align-items:center;justify-content:center;color:#e8a87c;font-size:22px">▶</div>`
+    : `<img src="${thumbSrc}" style="width:80px;height:80px;object-fit:cover;border-radius:12px">`;
+  const rm = document.createElement('button');
+  rm.className = 'media-remove';
+  rm.innerHTML = '✕';
+  rm.onclick = () => {
+    // existingFilesから除外
+    existingFiles = existingFiles.filter(u => u !== url);
+    thumb.remove();
+  };
+  thumb.appendChild(rm);
+  picker.insertBefore(thumb, addBtn);
+}
+
 // ==========================================
 // Submit Post（楽観的UI）
 // ==========================================
@@ -1238,8 +1379,14 @@ async function submitPost() {
 
   // ③ バックグラウンドでアップロード
   try {
-    const fileUrls = [];
+    // 編集時に残した既存写真URLから開始
+    const fileUrls = editingPostId ? [...existingFiles] : [];
     let thumbnailUrl = '';
+    // 既存先頭がある場合はサムネに使う
+    if (fileUrls.length > 0) {
+      const fid = getFileId(fileUrls[0]);
+      if (fid) thumbnailUrl = `https://drive.google.com/thumbnail?id=${fid}&sz=w400`;
+    }
 
     for (const pf of validFiles) {
       const base64 = await readFileAsBase64(pf.file);
@@ -1377,11 +1524,156 @@ function closeLightbox() {
 }
 
 // ==========================================
+// 全画面ビューア（スワイプ＋ピンチ拡大）
+// ==========================================
+function openViewer(files, startIndex) {
+  const viewer = document.getElementById('viewer');
+  const track = document.getElementById('viewerTrack');
+  const counter = document.getElementById('viewerCounter');
+
+  // 各ファイルのページを生成
+  track.innerHTML = files.map(f => {
+    const isVid = isVideoUrl(f);
+    const fileId = getFileId(f);
+    if (isVid) {
+      const viewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : f;
+      return `<div class="viewer-page">
+        <a class="viewer-video-link" href="${viewUrl}" target="_blank" rel="noopener">
+          <div class="play-circle">▶</div>
+          <span style="font-size:13px;color:#ccc">タップして動画を再生</span>
+        </a>
+      </div>`;
+    } else {
+      const imgUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600` : f;
+      return `<div class="viewer-page">
+        <img src="${imgUrl}" draggable="false" onerror="this.src='${f}'">
+      </div>`;
+    }
+  }).join('');
+
+  viewer.classList.add('open');
+
+  // カウンター更新
+  const updateCounter = (idx) => {
+    counter.textContent = `${idx + 1} / ${files.length}`;
+  };
+  updateCounter(startIndex);
+
+  // 指定ページへスクロール
+  requestAnimationFrame(() => {
+    track.scrollLeft = startIndex * track.offsetWidth;
+  });
+
+  // スクロールでカウンター更新
+  track.onscroll = () => {
+    if (track._zooming) return;
+    const idx = Math.round(track.scrollLeft / track.offsetWidth);
+    updateCounter(idx);
+  };
+
+  // ピンチ拡大を各画像に設定
+  track.querySelectorAll('.viewer-page img').forEach(img => {
+    setupPinchZoom(img, track);
+  });
+}
+
+function closeViewer() {
+  const viewer = document.getElementById('viewer');
+  viewer.classList.remove('open');
+  document.getElementById('viewerTrack').innerHTML = '';
+}
+
+// ピンチ拡大・パン操作
+function setupPinchZoom(img, track) {
+  let scale = 1, lastScale = 1;
+  let tx = 0, ty = 0, lastTx = 0, lastTy = 0;
+  let startDist = 0;
+  let mode = null; // 'pinch' | 'pan'
+  let startX = 0, startY = 0;
+
+  const apply = () => {
+    img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  };
+
+  const dist = (touches) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  };
+
+  img.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      mode = 'pinch';
+      startDist = dist(e.touches);
+      lastScale = scale;
+      track._zooming = true;
+    } else if (e.touches.length === 1 && scale > 1) {
+      // 拡大中は1本指でパン
+      mode = 'pan';
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      lastTx = tx; lastTy = ty;
+      track._zooming = true;
+    }
+  }, { passive: false });
+
+  img.addEventListener('touchmove', (e) => {
+    if (mode === 'pinch' && e.touches.length === 2) {
+      e.preventDefault();
+      const d = dist(e.touches);
+      scale = Math.min(Math.max(lastScale * (d / startDist), 1), 5);
+      apply();
+    } else if (mode === 'pan' && e.touches.length === 1 && scale > 1) {
+      e.preventDefault();
+      tx = lastTx + (e.touches[0].clientX - startX);
+      ty = lastTy + (e.touches[0].clientY - startY);
+      apply();
+    }
+  }, { passive: false });
+
+  img.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0) {
+      mode = null;
+      if (scale <= 1.02) {
+        // 等倍に戻す
+        scale = 1; tx = 0; ty = 0;
+        img.style.transition = 'transform 0.2s';
+        apply();
+        setTimeout(() => { img.style.transition = ''; }, 200);
+        // スワイプ復帰
+        setTimeout(() => { track._zooming = false; }, 50);
+      }
+    }
+  });
+
+  // ダブルタップでズームトグル
+  let lastTap = 0;
+  img.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTap < 300 && e.touches.length === 0) {
+      if (scale > 1) {
+        scale = 1; tx = 0; ty = 0;
+        track._zooming = false;
+      } else {
+        scale = 2.5;
+        track._zooming = true;
+      }
+      img.style.transition = 'transform 0.2s';
+      apply();
+      setTimeout(() => { img.style.transition = ''; }, 200);
+    }
+    lastTap = now;
+  });
+}
+
+// ==========================================
 // Modal
 // ==========================================
 function openModal() {
   editingPostId = null;
   pendingFiles = [];
+  existingFiles = [];
   document.getElementById('formCatGrid').querySelectorAll('.cat-checkbox').forEach(c => c.checked = false);
   document.getElementById('mediaPicker').querySelectorAll('.media-thumb').forEach(t => t.remove());
   document.getElementById('postTitle').value = '';
@@ -1401,11 +1693,14 @@ async function openEditModal(id) {
   const post = data.post;
   editingPostId = id;
   pendingFiles = [];
+  existingFiles = String(post.fileUrls || '').split('|').filter(Boolean);
 
   document.getElementById('formCatGrid').querySelectorAll('.cat-checkbox').forEach(c => {
     c.checked = String(post.categories || '').split(',').map(s => s.trim()).includes(c.value);
   });
+  // 既存・新規サムネイルをクリアして既存写真を表示
   document.getElementById('mediaPicker').querySelectorAll('.media-thumb').forEach(t => t.remove());
+  existingFiles.forEach((url, idx) => addExistingThumb(url, idx));
   document.getElementById('postTitle').value = post.title || '';
   document.getElementById('postComment').value = post.comment || '';
   document.getElementById('postTags').value = post.tags || '';
@@ -1442,6 +1737,7 @@ function bindEvents() {
     }
   });
   document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+  document.getElementById('viewerClose').addEventListener('click', closeViewer);
   document.getElementById('lightbox').addEventListener('click', e => {
     if (e.target === document.getElementById('lightbox')) closeLightbox();
   });
