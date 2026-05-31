@@ -258,7 +258,7 @@
   .post-header {
     display: flex;
     align-items: center;
-    padding: 10px 14px;
+    padding: 16px 14px;
     gap: 10px;
   }
 
@@ -1920,61 +1920,87 @@ function renderRatingBar(postId, fileIndex) {
 function bindRatingBarEvents() {
   const track = document.getElementById('viewerTrack');
 
-  // ★トグル（自分の評価）
+  // ★トグル（自分の評価）— 楽観的UI、画面に留まる
   track.querySelectorAll('.my-star-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.index);
       const key = `${viewerPostId}_${idx}`;
       const arr = ratings[key] || [];
       const my = arr.find(r => r.user === currentUser);
       const newStar = !(my && my.star);
       const comment = (my && my.comment) || '';
-      await saveRating(idx, newStar, comment);
+      applyRatingLocally(idx, newStar, comment);
+      refreshRatingBar(idx);
+      applyFilters();
+      saveRatingBackground(idx, newStar, comment);
     });
   });
 
-  // コメント保存
+  // コメント保存 — 楽観的UI、保存後ビューアを閉じる
   track.querySelectorAll('.rate-comment-save').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.index);
       const input = track.querySelector(`.rate-comment-input[data-index="${idx}"]`);
       const key = `${viewerPostId}_${idx}`;
       const arr = ratings[key] || [];
       const my = arr.find(r => r.user === currentUser);
       const star = !!(my && my.star);
-      await saveRating(idx, star, input.value.trim());
+      const comment = input.value.trim();
+      applyRatingLocally(idx, star, comment);
+      applyFilters();
+      const postId = viewerPostId;
+      saveRatingBackground(idx, star, comment, postId);
+      closeViewer();
+      showToast('保存しました ✓');
     });
   });
 }
 
-// 評価を保存してビューア・タイムラインを更新
-async function saveRating(fileIndex, star, comment) {
-  try {
-    await apiPost({
-      action: 'setRating',
-      postId: viewerPostId,
-      fileIndex,
-      user: currentUser,
-      star,
-      comment
-    });
-    await reloadRatings();
-    // ビューア内の該当ページの評価バーを再描画
-    const track = document.getElementById('viewerTrack');
-    const bar = track.querySelector(`.viewer-rating[data-index="${fileIndex}"]`);
-    if (bar) {
-      const wrap = document.createElement('div');
-      wrap.innerHTML = renderRatingBar(viewerPostId, fileIndex);
-      bar.replaceWith(wrap.firstElementChild);
-      bindRatingBarEvents();
-    }
-    // タイムラインのタイルも更新
-    applyFilters();
-    showToast('評価を保存しました');
-  } catch (e) {
-    console.error(e);
-    showToast('保存に失敗しました');
+// ローカルのratingsを即座に更新
+function applyRatingLocally(fileIndex, star, comment) {
+  const key = `${viewerPostId}_${fileIndex}`;
+  if (!ratings[key]) ratings[key] = [];
+  const u = getUser(currentUser);
+  let my = ratings[key].find(r => r.user === currentUser);
+  if (!star && !(comment && comment.trim())) {
+    // 空なら自分の評価を削除
+    ratings[key] = ratings[key].filter(r => r.user !== currentUser);
+    return;
   }
+  if (my) {
+    my.star = star;
+    my.comment = comment;
+  } else {
+    ratings[key].push({ user: currentUser, initial: u ? u.initial : '?', star, comment });
+  }
+}
+
+// ビューア内の評価バーだけ再描画
+function refreshRatingBar(fileIndex) {
+  const track = document.getElementById('viewerTrack');
+  const bar = track.querySelector(`.viewer-rating[data-index="${fileIndex}"]`);
+  if (bar) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = renderRatingBar(viewerPostId, fileIndex);
+    bar.replaceWith(wrap.firstElementChild);
+    bindRatingBarEvents();
+  }
+}
+
+// バックグラウンドでサーバー保存（待たない）
+function saveRatingBackground(fileIndex, star, comment, postId) {
+  const pid = postId || viewerPostId;
+  apiPost({
+    action: 'setRating',
+    postId: pid,
+    fileIndex,
+    user: currentUser,
+    star,
+    comment
+  }).catch(e => {
+    console.error(e);
+    showToast('⚠️ 保存に失敗しました');
+  });
 }
 
 function closeViewer() {
