@@ -985,6 +985,254 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ==================== ダッシュボード ==================== */
+  .dash-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 550;
+    background: var(--bg);
+    flex-direction: column;
+  }
+  .dash-overlay.open { display: flex; }
+
+  .dash-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: calc(var(--safe-top) + 12px) 16px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .dash-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 17px;
+    color: var(--accent);
+  }
+  .dash-close {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .dash-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px calc(var(--safe-bottom) + 30px);
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .dash-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .dash-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* 期間切替タブ */
+  .dash-period-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .dash-period-tab {
+    flex: 1;
+    padding: 6px 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+  }
+  .dash-period-tab.active {
+    background: var(--accent);
+    color: #1a1a2e;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* 統計サマリーカード */
+  .dash-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .dash-stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .dash-stat-num {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+  }
+  .dash-stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* 横棒バーチャート */
+  .dash-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .dash-bar-label {
+    flex-shrink: 0;
+    width: 64px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dash-bar-track {
+    flex: 1;
+    height: 18px;
+    background: var(--surface2);
+    border-radius: 9px;
+    overflow: hidden;
+    position: relative;
+  }
+  .dash-bar-fill {
+    height: 100%;
+    border-radius: 9px;
+    background: linear-gradient(90deg, var(--accent), #e07b4a);
+    min-width: 2px;
+    transition: width 0.5s ease;
+  }
+  .dash-bar-value {
+    flex-shrink: 0;
+    width: 28px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: left;
+  }
+
+  /* 縦棒（推移） */
+  .dash-trend {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 140px;
+    padding-top: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .dash-trend::-webkit-scrollbar { display: none; }
+  .dash-trend-col {
+    flex: 1;
+    min-width: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 4px;
+  }
+  .dash-trend-bar {
+    width: 60%;
+    max-width: 24px;
+    background: linear-gradient(180deg, var(--accent2), #9b6fd4);
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.5s ease;
+  }
+  .dash-trend-val {
+    font-size: 10px;
+    color: var(--text);
+    font-weight: 700;
+  }
+  .dash-trend-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* ★人別 */
+  .dash-star-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .dash-person-badge {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #e07b4a);
+    color: #1a1a2e;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* コメント一覧 */
+  .dash-comment-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .dash-comment-item:last-child { border-bottom: none; }
+  .dash-comment-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .dash-comment-who {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent2);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dash-comment-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .dash-comment-text {
+    color: var(--text);
+    padding-left: 30px;
+  }
+  .dash-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px;
+  }
+
   /* ==================== ログイン画面 ==================== */
   .login-overlay {
     display: none;
@@ -1067,6 +1315,7 @@
   <div class="header-inner">
     <div class="logo"><span class="logo-yh">yh</span><span class="logo-note">note</span></div>
     <div class="header-actions">
+      <button class="icon-btn" id="dashboardBtn" title="ダッシュボード" style="display:none">📊</button>
       <button class="icon-btn" id="starFilterBtn" title="★付きのみ">⭐️</button>
       <button class="icon-btn" id="searchToggle" title="検索">🔍</button>
       <button class="icon-btn" id="userBtn" title="ユーザー"></button>
@@ -1152,6 +1401,15 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- ダッシュボード -->
+<div class="dash-overlay" id="dashOverlay">
+  <div class="dash-header">
+    <span class="dash-title">📊 ダッシュボード</span>
+    <button class="dash-close" id="dashClose">✕</button>
+  </div>
+  <div class="dash-body" id="dashBody"></div>
+</div>
 
 <!-- ログイン画面 -->
 <div class="login-overlay" id="loginOverlay">
@@ -1259,10 +1517,13 @@ function showLoginScreen() {
 function applyPermissions() {
   const u = getUser(currentUser);
   const fab = document.getElementById('fabBtn');
+  const dashBtn = document.getElementById('dashboardBtn');
   if (u && !u.parent) {
     fab.style.display = 'none';
+    dashBtn.style.display = 'none';
   } else {
     fab.style.display = 'flex';
+    dashBtn.style.display = 'flex';
   }
 }
 
@@ -2009,6 +2270,200 @@ function closeViewer() {
   document.getElementById('viewerTrack').innerHTML = '';
 }
 
+// ==========================================
+// ダッシュボード
+// ==========================================
+let dashPeriod = 'month'; // day / week / month / year
+
+function openDashboard() {
+  document.getElementById('dashOverlay').classList.add('open');
+  renderDashboard();
+}
+
+function closeDashboard() {
+  document.getElementById('dashOverlay').classList.remove('open');
+}
+
+// 期間キーを生成（投稿日時から）
+function periodKey(dateStr, period) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  if (period === 'day') {
+    return `${y}/${String(m).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  } else if (period === 'week') {
+    // ISO週番号の簡易版（年内通算週）
+    const onejan = new Date(y, 0, 1);
+    const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+    return `${y} W${week}`;
+  } else if (period === 'month') {
+    return `${y}/${String(m).padStart(2,'0')}`;
+  } else { // year
+    return `${y}`;
+  }
+}
+
+function renderDashboard() {
+  const body = document.getElementById('dashBody');
+
+  // ---- サマリー集計 ----
+  const totalPosts = allPosts.length;
+  let totalPhotos = 0;
+  allPosts.forEach(p => { totalPhotos += String(p.fileUrls || '').split('|').filter(Boolean).length; });
+  let totalStars = 0, totalComments = 0;
+  Object.values(ratings).forEach(arr => {
+    arr.forEach(r => { if (r.star) totalStars++; if (r.comment && r.comment.trim()) totalComments++; });
+  });
+
+  // ---- 推移集計 ----
+  const trendMap = {};
+  allPosts.forEach(p => {
+    const k = periodKey(p.shootingDate, dashPeriod);
+    if (k) trendMap[k] = (trendMap[k] || 0) + 1;
+  });
+  const trendKeys = Object.keys(trendMap).sort();
+  // 直近20件に絞る
+  const shownKeys = trendKeys.slice(-20);
+  const maxTrend = Math.max(1, ...shownKeys.map(k => trendMap[k]));
+
+  // ---- カテゴリ集計 ----
+  const catMap = {};
+  allPosts.forEach(p => {
+    String(p.categories || '').split(',').map(c => c.trim()).filter(Boolean).forEach(c => {
+      catMap[c] = (catMap[c] || 0) + 1;
+    });
+  });
+  const catEntries = Object.entries(catMap).sort((a,b) => b[1] - a[1]);
+  const maxCat = Math.max(1, ...catEntries.map(e => e[1]));
+
+  // ---- ★人別集計 ----
+  const starByUser = {};
+  USERS.forEach(u => starByUser[u.id] = 0);
+  Object.values(ratings).forEach(arr => {
+    arr.forEach(r => { if (r.star && starByUser[r.user] !== undefined) starByUser[r.user]++; });
+  });
+  const maxStar = Math.max(1, ...Object.values(starByUser));
+
+  // ---- コメント人別＋一覧 ----
+  const commentByUser = {};
+  USERS.forEach(u => commentByUser[u.id] = 0);
+  const allComments = [];
+  Object.entries(ratings).forEach(([key, arr]) => {
+    const [postId, fileIndex] = key.split('_');
+    arr.forEach(r => {
+      if (r.comment && r.comment.trim()) {
+        if (commentByUser[r.user] !== undefined) commentByUser[r.user]++;
+        const post = allPosts.find(p => String(p.id) === String(postId));
+        allComments.push({
+          user: r.user, initial: r.initial, comment: r.comment,
+          title: post ? (post.title || '無題') : '(削除済み)'
+        });
+      }
+    });
+  });
+
+  // ---- HTML生成 ----
+  let html = '';
+
+  // サマリー
+  html += `<div class="dash-stats">
+    <div class="dash-stat-card"><div class="dash-stat-num">${totalPosts}</div><div class="dash-stat-label">投稿数</div></div>
+    <div class="dash-stat-card"><div class="dash-stat-num">${totalPhotos}</div><div class="dash-stat-label">写真・動画</div></div>
+    <div class="dash-stat-card"><div class="dash-stat-num">${totalStars}</div><div class="dash-stat-label">★ 合計</div></div>
+  </div>`;
+
+  // 投稿推移
+  html += `<div class="dash-section">
+    <div class="dash-section-title">📈 投稿数の推移</div>
+    <div class="dash-period-tabs">
+      ${['day','week','month','year'].map(p =>
+        `<button class="dash-period-tab ${dashPeriod===p?'active':''}" data-period="${p}">${{day:'日',week:'週',month:'月',year:'年'}[p]}</button>`
+      ).join('')}
+    </div>
+    <div class="dash-trend">
+      ${shownKeys.length ? shownKeys.map(k => {
+        const v = trendMap[k];
+        const h = Math.round((v / maxTrend) * 100);
+        const shortLabel = dashPeriod === 'month' ? k.slice(2) : (dashPeriod === 'year' ? k : k.slice(5));
+        return `<div class="dash-trend-col">
+          <div class="dash-trend-val">${v}</div>
+          <div class="dash-trend-bar" style="height:${h}%"></div>
+          <div class="dash-trend-label">${shortLabel}</div>
+        </div>`;
+      }).join('') : '<div class="dash-empty">データがありません</div>'}
+    </div>
+  </div>`;
+
+  // カテゴリ別
+  html += `<div class="dash-section">
+    <div class="dash-section-title">📁 カテゴリ別 投稿数</div>
+    ${catEntries.length ? catEntries.map(([cid, cnt]) => {
+      const def = CATEGORIES.find(c => c.id === cid);
+      const label = def ? def.label : cid;
+      const w = Math.round((cnt / maxCat) * 100);
+      return `<div class="dash-bar-row">
+        <div class="dash-bar-label">${label}</div>
+        <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${w}%"></div></div>
+        <div class="dash-bar-value">${cnt}</div>
+      </div>`;
+    }).join('') : '<div class="dash-empty">データがありません</div>'}
+  </div>`;
+
+  // ★人別
+  html += `<div class="dash-section">
+    <div class="dash-section-title">⭐️ ★ 人別ランキング</div>
+    ${USERS.map(u => {
+      const cnt = starByUser[u.id];
+      const w = Math.round((cnt / maxStar) * 100);
+      return `<div class="dash-star-person">
+        <div class="dash-person-badge">${u.initial}</div>
+        <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${w}%"></div></div>
+        <div class="dash-bar-value">${cnt}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // コメント数人別
+  html += `<div class="dash-section">
+    <div class="dash-section-title">💬 コメント数（合計 ${totalComments}）</div>
+    ${USERS.map(u => {
+      const cnt = commentByUser[u.id];
+      const maxC = Math.max(1, ...Object.values(commentByUser));
+      const w = Math.round((cnt / maxC) * 100);
+      return `<div class="dash-star-person">
+        <div class="dash-person-badge" style="background:var(--accent2);color:#fff">${u.initial}</div>
+        <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${w}%;background:linear-gradient(90deg,var(--accent2),#9b6fd4)"></div></div>
+        <div class="dash-bar-value">${cnt}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // コメント一覧
+  html += `<div class="dash-section">
+    <div class="dash-section-title">📝 コメント一覧</div>
+    ${allComments.length ? allComments.slice().reverse().map(c =>
+      `<div class="dash-comment-item">
+        <div class="dash-comment-head">
+          <div class="dash-comment-who">${c.initial}</div>
+          <div class="dash-comment-meta">${escHtml(c.title)}</div>
+        </div>
+        <div class="dash-comment-text">${escHtml(c.comment)}</div>
+      </div>`
+    ).join('') : '<div class="dash-empty">まだコメントがありません</div>'}
+  </div>`;
+
+  body.innerHTML = html;
+
+  // 期間タブのイベント
+  body.querySelectorAll('.dash-period-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      dashPeriod = btn.dataset.period;
+      renderDashboard();
+    });
+  });
+}
+
 // ピンチ拡大・パン操作
 function setupPinchZoom(img, track) {
   let scale = 1, lastScale = 1;
@@ -2195,6 +2650,10 @@ function bindEvents() {
       document.getElementById('searchInput').focus();
     }
   });
+
+  // ダッシュボード
+  document.getElementById('dashboardBtn').addEventListener('click', openDashboard);
+  document.getElementById('dashClose').addEventListener('click', closeDashboard);
 
   // ★フィルタートグル
   document.getElementById('starFilterBtn').addEventListener('click', () => {
