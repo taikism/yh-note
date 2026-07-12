@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="YH Note">
+<meta name="apple-mobile-web-app-title" content="5678-note">
 <base href="/yh-note/">
 <meta name="theme-color" content="#1a1a2e">
-<title>YH Note</title>
+<title>5678-note</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -81,6 +81,13 @@
   .logo-note {
     font-weight: 400;
     color: var(--accent);
+  }
+  .logo-ver {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-left: 6px;
+    letter-spacing: 0;
   }
 
   .header-actions {
@@ -1350,7 +1357,7 @@
 <!-- HEADER -->
 <div class="header">
   <div class="header-inner">
-    <div class="logo"><span class="logo-yh">yh</span><span class="logo-note">note</span></div>
+    <div class="logo"><span class="logo-yh">5678</span><span class="logo-note">-note</span><span class="logo-ver">v1.01</span></div>
     <div class="header-actions">
       <button class="icon-btn" id="dashboardBtn" title="ダッシュボード" style="display:none">📊</button>
       <button class="icon-btn" id="starFilterBtn" title="★付きのみ">⭐️</button>
@@ -1451,7 +1458,7 @@
 <!-- ログイン画面 -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
-    <div class="login-logo"><span class="logo-yh">yh</span><span class="logo-note">note</span></div>
+    <div class="login-logo"><span class="logo-yh">5678</span><span class="logo-note">-note</span></div>
     <div class="login-prompt">あなたは誰ですか？</div>
     <div class="login-grid" id="loginGrid"></div>
   </div>
@@ -2783,14 +2790,14 @@ function isVideoUrl(url) {
 }
 
 function fileToThumb(fileUrl) {
-  const match = fileUrl.match(/\/d\/([^/]+)/);
-  if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
+  const id = getFileId(fileUrl);
+  if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w400`;
   return fileUrl;
 }
 
 function toDirectUrl(fileUrl) {
-  const match = fileUrl.match(/\/d\/([^/]+)/);
-  if (match) return `https://drive.google.com/uc?id=${match[1]}`;
+  const id = getFileId(fileUrl);
+  if (id) return `https://drive.google.com/uc?id=${id}`;
   return fileUrl;
 }
 
@@ -2802,15 +2809,16 @@ function videoStreamUrl(fileUrl) {
 }
 
 function toEmbedUrl(fileUrl) {
-  const match = fileUrl.match(/\/d\/([^/]+)/);
-  if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+  const id = getFileId(fileUrl);
+  if (id) return `https://drive.google.com/file/d/${id}/preview`;
   return fileUrl;
 }
 
 function getFileId(fileUrl) {
-  const m1 = fileUrl.match(/\/d\/([^/]+)/);
+  // /d/{id}/... 形式（/view や #filename が続いても正しく抽出）
+  const m1 = fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if (m1) return m1[1];
-  const m2 = fileUrl.match(/id=([^&]+)/);
+  const m2 = fileUrl.match(/id=([a-zA-Z0-9_-]+)/);
   if (m2) return m2[1];
   return null;
 }
