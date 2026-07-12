@@ -332,6 +332,14 @@
     backdrop-filter: blur(4px);
     pointer-events: none;
   }
+  .tile-video-fallback {
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e, #252540);
+    font-size: 40px;
+  }
 
   /* タイル上の★バッジ（頭文字入り） */
   .tile-stars {
@@ -578,6 +586,13 @@
   .viewer-video {
     max-width: 100%;
     max-height: 100%;
+    background: #000;
+  }
+  .viewer-video-frame {
+    width: 100%;
+    height: 100%;
+    min-height: 240px;
+    border: none;
     background: #000;
   }
   .viewer-video-fallback {
@@ -1823,13 +1838,14 @@ function renderCard(post, i) {
         ? `<div class="tile-comment">${escHtml(cmt.comment.slice(0, 10))}${cmt.comment.length > 10 ? '…' : ''}</div>`
         : '';
 
-      // 動画は<video>で先頭フレームを表示（サムネ画像だと？になるため）
+      // 動画：サムネイル画像を表示、生成されていなければ動画アイコンにフォールバック
       let mediaEl;
       if (isVid) {
-        const src = videoStreamUrl(f);
-        const poster = getFileId(f) ? `https://drive.google.com/thumbnail?id=${getFileId(f)}&sz=w400` : '';
-        mediaEl = `<video src="${src}" preload="metadata" muted playsinline webkit-playsinline
-          style="width:100%;height:100%;object-fit:cover;background:#000;pointer-events:none"></video>
+        const fid = getFileId(f);
+        const poster = fid ? `https://drive.google.com/thumbnail?id=${fid}&sz=w400` : '';
+        mediaEl = `<img src="${poster}" loading="lazy"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="tile-video-fallback" style="display:none">🎬</div>
           <div class="media-tile-video-badge">▶</div>`;
       } else {
         mediaEl = `<img src="${fileToThumb(f)}" loading="lazy">`;
@@ -2172,14 +2188,12 @@ function openViewer(files, startIndex, postId) {
     const fileId = getFileId(f);
     let mediaPart;
     if (isVid) {
-      const streamUrl = videoStreamUrl(f);
+      const embedUrl = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : f;
       const viewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : f;
-      mediaPart = `<video class="viewer-video" controls playsinline webkit-playsinline
-          preload="metadata" src="${streamUrl}"
-          style="max-width:100%;max-height:100%">
-          お使いのブラウザは動画に対応していません
-        </video>
-        <a class="viewer-video-fallback" href="${viewUrl}" target="_blank" rel="noopener">再生できない場合はDriveで開く ↗</a>`;
+      mediaPart = `<iframe class="viewer-video-frame" src="${embedUrl}"
+          allow="autoplay; fullscreen" allowfullscreen
+          style="width:100%;height:100%;border:none;background:#000"></iframe>
+        <a class="viewer-video-fallback" href="${viewUrl}" target="_blank" rel="noopener">別画面で開く ↗</a>`;
     } else {
       const imgUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600` : f;
       mediaPart = `<img src="${imgUrl}" draggable="false" onerror="this.src='${f}'">`;
