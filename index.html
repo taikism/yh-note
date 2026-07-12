@@ -2778,7 +2778,8 @@ function escHtml(str) {
 }
 
 function isVideoUrl(url) {
-  return /\.(mp4|mov|m4v|avi|webm)/i.test(url);
+  // URL全体（末尾の#ファイル名含む）に動画拡張子があれば動画と判定
+  return /\.(mp4|mov|m4v|avi|webm|3gp|mkv)/i.test(decodeURIComponent(url));
 }
 
 function fileToThumb(fileUrl) {
