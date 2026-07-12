@@ -568,9 +568,30 @@
     flex: 1;
     min-height: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    position: relative;
+  }
+
+  .viewer-video {
+    max-width: 100%;
+    max-height: 100%;
+    background: #000;
+  }
+  .viewer-video-fallback {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ccc;
+    font-size: 12px;
+    background: rgba(0,0,0,0.5);
+    padding: 5px 12px;
+    border-radius: 14px;
+    text-decoration: none;
+    backdrop-filter: blur(4px);
   }
 
   .viewer-page img {
@@ -1306,6 +1327,7 @@
   .c-21 { background: rgba(255,255,150,0.2); color: #ffff96; }
   .c-99 { background: rgba(200,200,200,0.2); color: #c8c8c8; }
   .c-00 { background: rgba(150,150,150,0.2); color: #969696; }
+  .c-13 { background: rgba(232,168,124,0.25); color: #e8a87c; }
 </style>
 </head>
 <body>
@@ -1441,11 +1463,12 @@ const CATEGORIES = [
   { id: '21_hope',              label: '✨ Hope',         color: 'c-21' },
   { id: '99_remember',          label: '💭 Remember',    color: 'c-99' },
   { id: '00_inbox',             label: '📥 Inbox',        color: 'c-00' },
+  { id: '13_taikism-only',      label: '🔒 大貴専用',    color: 'c-13', ownerOnly: 'taikism' },
 ];
 
 // ユーザー定義（アカウント → 表示名・頭文字・権限）
 const USERS = [
-  { id: 'taikism',      name: '大貴',   initial: '大', parent: true },
+  { id: 'taikism',      name: '大貴',   initial: '大', parent: true, password: 'Ykrk1374' },
   { id: 'yoriko831',    name: '頼子',   initial: '頼', parent: true },
   { id: 'koharuth',     name: '心春',   initial: '心', parent: false },
   { id: 'rintaroth725', name: '凛太郎', initial: '凛', parent: false },
@@ -1504,7 +1527,18 @@ function showLoginScreen() {
   ).join('');
   grid.querySelectorAll('.login-user').forEach(btn => {
     btn.addEventListener('click', () => {
-      currentUser = btn.dataset.id;
+      const uid = btn.dataset.id;
+      const u = getUser(uid);
+      // パスワードが設定されているユーザーは入力を求める
+      if (u && u.password) {
+        const input = prompt(`${u.name}のパスワードを入力してください`);
+        if (input === null) return; // キャンセル
+        if (input !== u.password) {
+          alert('パスワードが違います');
+          return;
+        }
+      }
+      currentUser = uid;
       localStorage.setItem('yhnote_user', currentUser);
       ov.classList.remove('open');
       startApp();
@@ -1527,9 +1561,15 @@ function applyPermissions() {
   }
 }
 
+// カテゴリーが現在のユーザーに表示可能か
+function isCategoryVisible(c) {
+  if (!c.ownerOnly) return true;
+  return c.ownerOnly === currentUser;
+}
+
 function buildCategoryTabs() {
   const el = document.getElementById('categoryTabs');
-  el.innerHTML = CATEGORIES.map(c =>
+  el.innerHTML = CATEGORIES.filter(isCategoryVisible).map(c =>
     `<button class="cat-tab${c.id === 'all' ? ' active' : ''}" data-id="${c.id}">${c.label}</button>`
   ).join('');
   el.querySelectorAll('.cat-tab').forEach(btn => {
@@ -1581,7 +1621,7 @@ function buildMonthTabs(posts) {
 
 function buildFormCatGrid() {
   const grid = document.getElementById('formCatGrid');
-  grid.innerHTML = CATEGORIES.filter(c => c.id !== 'all').map(c =>
+  grid.innerHTML = CATEGORIES.filter(c => c.id !== 'all' && isCategoryVisible(c)).map(c =>
     `<label>
       <input type="checkbox" class="cat-checkbox" value="${c.id}">
       <span class="cat-label">${c.label}</span>
@@ -1643,6 +1683,15 @@ async function reloadRatings() {
 // フィルター適用（年月・ページング）
 function applyFilters() {
   let filtered = allPosts;
+
+  // 大貴専用など、ownerOnlyカテゴリーの投稿は本人以外に見せない
+  const hiddenCats = CATEGORIES.filter(c => c.ownerOnly && c.ownerOnly !== currentUser).map(c => c.id);
+  if (hiddenCats.length) {
+    filtered = filtered.filter(p => {
+      const cats = String(p.categories || '').split(',').map(c => c.trim());
+      return !cats.some(c => hiddenCats.includes(c));
+    });
+  }
 
   // カテゴリーフィルター
   if (currentCategory !== 'all') {
@@ -1763,7 +1812,6 @@ function renderCard(post, i) {
 
     const tilesHtml = files.map((f, idx) => {
       const isVid = isVideoUrl(f);
-      const thumb = fileToThumb(f);
       const rArr = ratings[`${post.id}_${idx}`] || [];
       const stars = rArr.filter(r => r.star);
       const starsHtml = stars.length
@@ -1774,9 +1822,21 @@ function renderCard(post, i) {
       const cmtHtml = cmt
         ? `<div class="tile-comment">${escHtml(cmt.comment.slice(0, 10))}${cmt.comment.length > 10 ? '…' : ''}</div>`
         : '';
+
+      // 動画は<video>で先頭フレームを表示（サムネ画像だと？になるため）
+      let mediaEl;
+      if (isVid) {
+        const src = videoStreamUrl(f);
+        const poster = getFileId(f) ? `https://drive.google.com/thumbnail?id=${getFileId(f)}&sz=w400` : '';
+        mediaEl = `<video src="${src}" preload="metadata" muted playsinline webkit-playsinline
+          style="width:100%;height:100%;object-fit:cover;background:#000;pointer-events:none"></video>
+          <div class="media-tile-video-badge">▶</div>`;
+      } else {
+        mediaEl = `<img src="${fileToThumb(f)}" loading="lazy">`;
+      }
+
       return `<div class="media-tile" data-post-id="${post.id}" data-index="${idx}">
-        <img src="${thumb}" loading="lazy">
-        ${isVid ? '<div class="media-tile-video-badge">▶</div>' : ''}
+        ${mediaEl}
         ${starsHtml}
         ${cmtHtml}
       </div>`;
@@ -1851,10 +1911,10 @@ async function addFiles(files) {
       exifDate = await readExifDate(file);
     } else if (file.type.startsWith('video/')) {
       // 動画：ファイルの最終更新日時を使用
-      exifDate = new Date(file.lastModified).toISOString().slice(0, 16);
+      exifDate = toLocalDatetimeStr(new Date(file.lastModified));
     } else {
       // その他：投稿日時（現在時刻）
-      exifDate = new Date().toISOString().slice(0, 16);
+      exifDate = toLocalDatetimeStr(new Date());
     }
 
     pendingFiles.push({ file, previewUrl, exifDate, mimeType: file.type });
@@ -2112,11 +2172,14 @@ function openViewer(files, startIndex, postId) {
     const fileId = getFileId(f);
     let mediaPart;
     if (isVid) {
+      const streamUrl = videoStreamUrl(f);
       const viewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : f;
-      mediaPart = `<a class="viewer-video-link" href="${viewUrl}" target="_blank" rel="noopener">
-          <div class="play-circle">▶</div>
-          <span style="font-size:13px;color:#ccc">タップして動画を再生</span>
-        </a>`;
+      mediaPart = `<video class="viewer-video" controls playsinline webkit-playsinline
+          preload="metadata" src="${streamUrl}"
+          style="max-width:100%;max-height:100%">
+          お使いのブラウザは動画に対応していません
+        </video>
+        <a class="viewer-video-fallback" href="${viewUrl}" target="_blank" rel="noopener">再生できない場合はDriveで開く ↗</a>`;
     } else {
       const imgUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600` : f;
       mediaPart = `<img src="${imgUrl}" draggable="false" onerror="this.src='${f}'">`;
@@ -2586,7 +2649,7 @@ async function openEditModal(id) {
   document.getElementById('postComment').value = post.comment || '';
   document.getElementById('postTags').value = post.tags || '';
   const d = new Date(post.shootingDate);
-  document.getElementById('shootingDate').value = d.toISOString().slice(0,16);
+  document.getElementById('shootingDate').value = toLocalDatetimeStr(d);
   document.getElementById('submitBtn').textContent = '更新する';
   document.getElementById('deleteBtn').style.display = 'block';
   document.getElementById('cancelBtn').style.display = 'block';
@@ -2689,6 +2752,13 @@ function bindEvents() {
 // ==========================================
 // Utilities
 // ==========================================
+// Dateをローカルタイムの "YYYY-MM-DDTHH:mm" 形式に（datetime-local用、UTCズレを防ぐ）
+function toLocalDatetimeStr(d) {
+  if (isNaN(d)) return '';
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -2706,6 +2776,13 @@ function fileToThumb(fileUrl) {
 function toDirectUrl(fileUrl) {
   const match = fileUrl.match(/\/d\/([^/]+)/);
   if (match) return `https://drive.google.com/uc?id=${match[1]}`;
+  return fileUrl;
+}
+
+// 動画ストリーミング用URL（<video>のsrcに使う）
+function videoStreamUrl(fileUrl) {
+  const id = getFileId(fileUrl);
+  if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
   return fileUrl;
 }
 
