@@ -339,13 +339,33 @@
     backdrop-filter: blur(4px);
     pointer-events: none;
   }
-  .tile-video-fallback {
+  /* 動画タイル：サムネの有無に関わらず必ず再生アイコンが見える */
+  .media-tile-video {
     position: absolute;
     inset: 0;
+    background: linear-gradient(135deg, #1a1a2e, #2a2a45);
+    display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #1a1a2e, #252540);
-    font-size: 40px;
+  }
+  .media-tile-video img {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .media-tile-play {
+    position: relative;
+    z-index: 1;
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.85);
+    color: #fff;
+    font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    padding-left: 4px;
+    backdrop-filter: blur(2px);
   }
 
   /* タイル上の★バッジ（頭文字入り） */
@@ -1357,7 +1377,7 @@
 <!-- HEADER -->
 <div class="header">
   <div class="header-inner">
-    <div class="logo"><span class="logo-yh">5678</span><span class="logo-note">-note</span><span class="logo-ver">v1.01</span></div>
+    <div class="logo"><span class="logo-yh">5678</span><span class="logo-note">-note</span><span class="logo-ver">v1.02</span></div>
     <div class="header-actions">
       <button class="icon-btn" id="dashboardBtn" title="ダッシュボード" style="display:none">📊</button>
       <button class="icon-btn" id="starFilterBtn" title="★付きのみ">⭐️</button>
@@ -1845,15 +1865,16 @@ function renderCard(post, i) {
         ? `<div class="tile-comment">${escHtml(cmt.comment.slice(0, 10))}${cmt.comment.length > 10 ? '…' : ''}</div>`
         : '';
 
-      // 動画：サムネイル画像を表示、生成されていなければ動画アイコンにフォールバック
+      // 動画：サムネ生成が不安定なMOV等に対応し、常に再生アイコン付きの見た目にする
       let mediaEl;
       if (isVid) {
         const fid = getFileId(f);
         const poster = fid ? `https://drive.google.com/thumbnail?id=${fid}&sz=w400` : '';
-        mediaEl = `<img src="${poster}" loading="lazy"
-            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-          <div class="tile-video-fallback" style="display:none">🎬</div>
-          <div class="media-tile-video-badge">▶</div>`;
+        // サムネが取れれば背景に表示、取れなくても下地のグラデ＋▶が見える
+        mediaEl = `<div class="media-tile-video">
+            <img src="${poster}" loading="lazy" onerror="this.style.display='none'">
+            <div class="media-tile-play">▶</div>
+          </div>`;
       } else {
         mediaEl = `<img src="${fileToThumb(f)}" loading="lazy">`;
       }
