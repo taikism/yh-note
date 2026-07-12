@@ -327,6 +327,16 @@
     max-height: 460px;
     height: auto;
   }
+  /* 動画タイル（1枚）は絶対配置で高さが潰れるので明示的に高さを確保 */
+  .media-tile-grid.cols-1 .media-tile:has(.media-tile-video) {
+    aspect-ratio: auto;
+    height: 300px;
+  }
+  .media-tile-grid:not(.cols-1) .media-tile .media-tile-video img,
+  .media-tile-grid.cols-1 .media-tile .media-tile-video img {
+    max-height: none;
+    height: 100%;
+  }
   .media-tile-video-badge {
     position: absolute;
     top: 6px; right: 6px;
@@ -343,6 +353,7 @@
   .media-tile-video {
     position: absolute;
     inset: 0;
+    min-height: 200px;
     background: linear-gradient(135deg, #1a1a2e, #2a2a45);
     display: flex;
     align-items: center;
@@ -1377,7 +1388,7 @@
 <!-- HEADER -->
 <div class="header">
   <div class="header-inner">
-    <div class="logo"><span class="logo-yh">5678</span><span class="logo-note">-note</span><span class="logo-ver">v1.02</span></div>
+    <div class="logo"><span class="logo-yh">5678</span><span class="logo-note">-note</span><span class="logo-ver">v1.03</span></div>
     <div class="header-actions">
       <button class="icon-btn" id="dashboardBtn" title="ダッシュボード" style="display:none">📊</button>
       <button class="icon-btn" id="starFilterBtn" title="★付きのみ">⭐️</button>
